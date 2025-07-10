@@ -1,0 +1,2 @@
+DB_USERNAME=[postgreSQL root username]
+DB_PASSWORD=[postgreSQL root password]
