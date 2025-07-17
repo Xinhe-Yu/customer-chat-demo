@@ -11,12 +11,11 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ClientDTO {
+public class ClientDto {
   private UUID id;
   private String email;
   private String username;
   private Map<String, Object> clientData;
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
-
 }

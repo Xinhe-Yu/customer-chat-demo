@@ -19,7 +19,7 @@ import lombok.*;
 import lombok.experimental.Accessors;
 
 @Entity
-@Table(name = "agent")
+@Table(name = "agents")
 @Data
 @Accessors(chain = true)
 @EntityListeners(AuditingEntityListener.class)
@@ -41,9 +41,4 @@ public class Agent {
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "agent_data", columnDefinition = "jsonb")
   private Map<String, Object> agentData;
-
-  // @NonNull
-  // @ManyToOne(fetch = FetchType.LAZY)
-  // @JoinColumn(name = "agency_id")
-  // private Agency agency;
 }

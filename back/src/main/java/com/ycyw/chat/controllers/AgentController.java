@@ -22,11 +22,16 @@ import com.ycyw.chat.services.JWTService;
 @RestController
 @RequestMapping("/api/agent")
 public class AgentController {
-  @Autowired
-  private AuthenticationManager authenticationManager;
 
-  @Autowired
-  private JWTService jwtService;
+  private final AuthenticationManager authenticationManager;
+  private final JWTService jwtService;
+
+  public AgentController(
+      AuthenticationManager authenticationManager,
+      JWTService jwtService) {
+    this.authenticationManager = authenticationManager;
+    this.jwtService = jwtService;
+  }
 
   @PostMapping("/auth")
   public ResponseEntity<ApiResponseDto> loginUser(@RequestBody LoginDto loginDto) {

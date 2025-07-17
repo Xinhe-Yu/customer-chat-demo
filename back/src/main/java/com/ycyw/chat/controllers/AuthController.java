@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ycyw.chat.dto.ClientDTO;
+import com.ycyw.chat.dto.ClientDto;
 import com.ycyw.chat.dto.request.LoginDto;
 import com.ycyw.chat.dto.response.ApiResponseDto;
 import com.ycyw.chat.dto.response.ErrorResponseDto;
@@ -28,17 +28,21 @@ import com.ycyw.chat.services.JWTService;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-  @Autowired
-  private AuthenticationManager authenticationManager;
+  private final AuthenticationManager authenticationManager;
+  private final JWTService jwtService;
+  private final ClientDetailsService clientDetailsService;
+  private final ClientMapper clientMapper;
 
-  @Autowired
-  private JWTService jwtService;
-
-  @Autowired
-  private ClientDetailsService clientDetailsService;
-
-  @Autowired
-  private ClientMapper clientMapper;
+  public AuthController(
+      AuthenticationManager authenticationManager,
+      JWTService jwtService,
+      ClientDetailsService clientDetailsService,
+      ClientMapper clientMapper) {
+    this.authenticationManager = authenticationManager;
+    this.jwtService = jwtService;
+    this.clientDetailsService = clientDetailsService;
+    this.clientMapper = clientMapper;
+  }
 
   @PostMapping("/login")
   public ResponseEntity<ApiResponseDto> loginUser(@RequestBody LoginDto loginDto) {
@@ -59,10 +63,10 @@ public class AuthController {
   }
 
   @GetMapping("/me")
-  public ResponseEntity<ClientDTO> getCurrentUser(@AuthenticationPrincipal ClientDetails clientDetails) {
+  public ResponseEntity<ClientDto> getCurrentUser(@AuthenticationPrincipal ClientDetails clientDetails) {
     Client client = clientDetailsService.getCurrentUser(clientDetails.getEmail());
 
-    ClientDTO clientDto = clientMapper.toDto(client);
+    ClientDto clientDto = clientMapper.toDto(client);
     return ResponseEntity.ok(clientDto);
   }
 }
