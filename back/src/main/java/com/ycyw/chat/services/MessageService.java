@@ -1,8 +1,10 @@
 package com.ycyw.chat.services;
 
 import com.ycyw.chat.dto.request.CreateMessageRequestDto;
+import com.ycyw.chat.models.Agent;
 import com.ycyw.chat.models.Message;
 import com.ycyw.chat.models.Ticket;
+import com.ycyw.chat.repositories.AgentRepository;
 import com.ycyw.chat.repositories.MessageRepository;
 import com.ycyw.chat.repositories.TicketRepository;
 import org.springframework.stereotype.Service;
@@ -16,10 +18,13 @@ public class MessageService {
 
   private final MessageRepository messageRepository;
   private final TicketRepository ticketRepository;
+  private final AgentRepository agentRepository;
 
-  public MessageService(MessageRepository messageRepository, TicketRepository ticketRepository) {
+  public MessageService(MessageRepository messageRepository, TicketRepository ticketRepository,
+      AgentRepository agentRepository) {
     this.messageRepository = messageRepository;
     this.ticketRepository = ticketRepository;
+    this.agentRepository = agentRepository;
   }
 
   /**
@@ -37,9 +42,12 @@ public class MessageService {
       agentId = UUID.fromString(principal.getName());
     }
 
+    Agent agent = agentRepository.findById(agentId)
+        .orElseThrow(() -> new RuntimeException("Agent not found"));
+
     Message message = Message.builder()
         .ticket(ticket)
-        .agentId(agentId)
+        .agent(agent)
         .message(messageDto.getContent())
         .createdAt(LocalDateTime.now())
         .build();

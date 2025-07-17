@@ -19,16 +19,13 @@ import lombok.experimental.Accessors;
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 public class Message {
-
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private UUID id;
 
-  @Column(name = "ticket_id", nullable = false)
-  private UUID ticketId;
-
-  @Column(name = "agent_id")
-  private UUID agentId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "ticket_id", nullable = false)
+  private Ticket ticket;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "agent_id")
@@ -41,7 +38,4 @@ public class Message {
   @Column(name = "created_at", updatable = false)
   private LocalDateTime createdAt;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "ticket_id", nullable = false)
-  private Ticket ticket;
 }

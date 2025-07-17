@@ -46,7 +46,7 @@ public class TicketController {
     Ticket ticket = ticketService.getTicket(ticketId);
     List<MessageDto> messageDtos = ticket.getMessages().stream()
         .map(m -> new MessageDto(
-            m.getAgentId() == null ? "CLIENT" : "AGENT",
+            m.getAgent() == null ? "CLIENT" : "AGENT",
             m.getMessage(),
             m.getCreatedAt().toString()))
         .toList();

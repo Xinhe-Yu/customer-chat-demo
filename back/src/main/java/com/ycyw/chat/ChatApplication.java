@@ -15,4 +15,10 @@ public class ChatApplication {
     SpringApplication.run(ChatApplication.class, args);
   }
 
+  // @Bean
+  // CommandLineRunner runner(BCryptPasswordEncoder encoder) {
+  // return args -> {
+  // System.out.println("Encoded password: " + encoder.encode("12345678"));
+  // };
+  // }
 }
