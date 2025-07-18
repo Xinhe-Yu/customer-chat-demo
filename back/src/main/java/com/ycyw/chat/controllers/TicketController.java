@@ -55,7 +55,8 @@ public class TicketController {
         ticket.getId().toString(),
         ticket.getStatus(),
         ticket.getIssueType(),
-        messageDtos);
+        messageDtos,
+        ticket.getCreatedAt().toString());
     return ResponseEntity.ok(response);
   }
 }

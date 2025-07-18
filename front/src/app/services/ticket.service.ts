@@ -22,6 +22,7 @@ export interface Ticket {
   status: string;
   issueType: string;
   messages: Message[];
+  createdAt: string;
 }
 
 @Injectable({
@@ -38,5 +39,9 @@ export class TicketService {
 
   getTicket(ticketId: string): Observable<Ticket> {
     return this.http.get<Ticket>(`${this.apiUrl}/tickets/${ticketId}`);
+  }
+
+  getAllTickets(): Observable<Ticket[]> {
+    return this.http.get<Ticket[]>(`${this.apiUrl}/agent/tickets`);
   }
 }

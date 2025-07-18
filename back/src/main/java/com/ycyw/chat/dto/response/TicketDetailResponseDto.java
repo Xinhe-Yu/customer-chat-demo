@@ -14,4 +14,5 @@ public class TicketDetailResponseDto {
   private String status;
   private String issueType;
   private List<MessageDto> messages;
+  private String createdAt;
 }

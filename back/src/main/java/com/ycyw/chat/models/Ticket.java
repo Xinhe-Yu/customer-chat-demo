@@ -27,11 +27,8 @@ public class Ticket {
   @GeneratedValue // relies on DB default gen_random_uuid()
   private UUID id;
 
-  @Column(name = "client_id")
-  private UUID clientId;
-
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "agent_id")
+  @JoinColumn(name = "client_id")
   private Client client;
 
   @Size(max = 100)

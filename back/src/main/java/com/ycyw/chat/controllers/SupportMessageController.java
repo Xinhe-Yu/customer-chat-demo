@@ -43,9 +43,10 @@ public class SupportMessageController {
     messagingTemplate.convertAndSend("/topic/tickets/" + ticketId, outDto);
 
     if ("CLIENT".equals(inDto.getSenderType()) && messageService.isFirstClientMessage(ticketId)) {
-      Ticket ticket = ticketService.getTicket(ticketId);
+      Ticket ticket = ticketService.getTicketWithClient(ticketId);
+      String clientUsername = ticket.getClient() != null ? ticket.getClient().getUsername() : "Unknown";
       messagingTemplate.convertAndSend("/topic/agent/open-tickets",
-          new OpenTicketNotification(ticketId, ticket.getIssueType(), ticket.getClient().getUsername()));
+          new OpenTicketNotification(ticketId, ticket.getIssueType(), clientUsername));
     }
   }
 }

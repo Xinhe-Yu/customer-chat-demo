@@ -10,4 +10,6 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
   List<Message> findByTicketId(UUID ticketId);
 
   boolean existsByTicketIdAndAgentIdIsNull(UUID ticketId);
+  
+  long countByTicketIdAndAgentIdIsNull(UUID ticketId);
 }

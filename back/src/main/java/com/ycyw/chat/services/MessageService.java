@@ -36,14 +36,13 @@ public class MessageService {
         .orElseThrow(() -> new RuntimeException("Ticket not found"));
 
     // Determine if this is a client or agent
-    UUID agentId = null;
+    Agent agent = null;
     if ("AGENT".equalsIgnoreCase(messageDto.getSenderType())) {
       // principal.getName() could be agentId or email depending on JWT
-      agentId = UUID.fromString(principal.getName());
+      UUID agentId = UUID.fromString(principal.getName());
+      agent = agentRepository.findById(agentId)
+          .orElseThrow(() -> new RuntimeException("Agent not found"));
     }
-
-    Agent agent = agentRepository.findById(agentId)
-        .orElseThrow(() -> new RuntimeException("Agent not found"));
 
     Message message = Message.builder()
         .ticket(ticket)
@@ -60,6 +59,6 @@ public class MessageService {
    */
   public boolean isFirstClientMessage(UUID ticketId) {
     // If no client message exists yet, then the next one will be the first
-    return !messageRepository.existsByTicketIdAndAgentIdIsNull(ticketId);
+    return messageRepository.countByTicketIdAndAgentIdIsNull(ticketId) == 1;
   }
 }

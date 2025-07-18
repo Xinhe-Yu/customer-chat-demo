@@ -9,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
 import { WebsocketService } from '../../services/websocket.service';
 import { AuthService } from '../../services/auth.service';
+import { TicketService } from '../../services/ticket.service';
 import { Subscription } from 'rxjs';
 
 interface TicketInfo {
@@ -40,11 +41,12 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
   constructor(
     private websocketService: WebsocketService,
     private authService: AuthService,
+    private ticketService: TicketService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
-    this.loadMockTickets();
+    this.loadTickets();
     this.connectWebSocket();
   }
 
@@ -53,23 +55,21 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
     this.websocketService.disconnect();
   }
 
-  private loadMockTickets(): void {
-    this.tickets = [
-      {
-        ticketId: '550e8400-e29b-41d4-a716-446655440001',
-        issueType: 'payment',
-        status: 'open',
-        clientId: 'client@gmail.com',
-        createdAt: new Date().toISOString()
+  private loadTickets(): void {
+    this.ticketService.getAllTickets().subscribe({
+      next: (tickets) => {
+        this.tickets = tickets.map(ticket => ({
+          ticketId: ticket.ticketId,
+          issueType: ticket.issueType,
+          status: ticket.status,
+          clientId: 'client', // You can enhance this later
+          createdAt: ticket.createdAt
+        }));
       },
-      {
-        ticketId: '550e8400-e29b-41d4-a716-446655440002',
-        issueType: 'technical',
-        status: 'open',
-        clientId: 'client@gmail.com',
-        createdAt: new Date(Date.now() - 3600000).toISOString()
+      error: (error) => {
+        console.error('Error loading tickets:', error);
       }
-    ];
+    });
   }
 
   private async connectWebSocket(): Promise<void> {
@@ -79,6 +79,14 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
       const agentTicketsSub = this.websocketService.subscribeToAgentTickets().subscribe({
         next: (ticketUpdate) => {
           console.log('New ticket update:', ticketUpdate);
+          // Add the new ticket to the list
+          this.tickets.push({
+            ticketId: ticketUpdate.ticketId,
+            issueType: ticketUpdate.issueType,
+            status: 'open',
+            clientId: ticketUpdate.clientUsername || 'client',
+            createdAt: new Date().toISOString()
+          });
         },
         error: (error) => console.error('Agent tickets subscription error:', error)
       });

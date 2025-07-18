@@ -83,7 +83,7 @@ export class AuthService {
       const payload = JSON.parse(atob(token.split('.')[1]));
       const user: User = {
         id: payload.sub,
-        role: payload.authorities?.[0]?.authority === 'ROLE_AGENT' ? 'AGENT' : 'CLIENT'
+        role: payload.role === 'ROLE_AGENT' ? 'AGENT' : 'CLIENT'
       };
       this.currentUserSubject.next(user);
     } catch {
