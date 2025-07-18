@@ -22,6 +22,7 @@ public class ClientDetailsService implements UserDetailsService {
         .map(client -> ClientDetails.builder()
             .id(client.getId())
             .username(client.getUsername())
+            .email(client.getEmail())
             .password(client.getPassword())
             .build())
         .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé"));

@@ -40,10 +40,10 @@ Then inside the prompt:
 `\q`
 
 Now execute the SQL file:
-`sudo -u postgres psql -d ycyw -f src/main/static/templates/schema.sql`
+`sudo -u postgres psql -d ycyw -f src/main/resources/static/schema.sql`
 
 4. (Optional) If you want to populate your database with initial data, you can use the seeding feature:
-`sudo -u postgres psql -d ycyw -f src/main/static/templates/seeds.sql`
+`sudo -u postgres psql -d ycyw -f src/main/resources/static/seeds.sql`
 
 You can set your own password by uncomment `CommandLineRunner` Bean in main method, and get the encoded string from terminal.
 

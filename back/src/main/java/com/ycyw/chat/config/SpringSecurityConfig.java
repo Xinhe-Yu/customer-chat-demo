@@ -22,6 +22,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import com.ycyw.chat.services.AgentDetailsService;
 import com.ycyw.chat.services.ClientDetailsService;
 
 import io.github.cdimascio.dotenv.Dotenv;
@@ -34,6 +35,9 @@ public class SpringSecurityConfig {
   public SpringSecurityConfig() {
     Dotenv dotenv = Dotenv.load();
     this.jwtKey = dotenv.get("JWT_KEY");
+    if (this.jwtKey == null || this.jwtKey.trim().isEmpty()) {
+      throw new IllegalStateException("JWT_KEY environment variable is not set or is empty");
+    }
   }
 
   @Bean
@@ -48,7 +52,7 @@ public class SpringSecurityConfig {
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/ws/**").permitAll()
-            .requestMatchers("/api/auth/login", "/api/auth/me").permitAll()
+            .requestMatchers("/api/auth/login", "/api/auth/me", "/api/agent/auth").permitAll()
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
             .anyRequest().authenticated())
         .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
@@ -73,9 +77,14 @@ public class SpringSecurityConfig {
 
   @Bean
   public AuthenticationManager authenticationManager(ClientDetailsService clientDetailsService,
+      AgentDetailsService agentDetailsService,
       BCryptPasswordEncoder passwordEncoder) {
-    DaoAuthenticationProvider daoProvider = new DaoAuthenticationProvider(clientDetailsService);
-    daoProvider.setPasswordEncoder(passwordEncoder);
-    return new ProviderManager(List.of(daoProvider));
+    DaoAuthenticationProvider clientProvider = new DaoAuthenticationProvider(clientDetailsService);
+    clientProvider.setPasswordEncoder(passwordEncoder);
+    
+    DaoAuthenticationProvider agentProvider = new DaoAuthenticationProvider(agentDetailsService);
+    agentProvider.setPasswordEncoder(passwordEncoder);
+    
+    return new ProviderManager(List.of(clientProvider, agentProvider));
   }
 }
