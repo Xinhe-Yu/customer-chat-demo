@@ -1,0 +1,62 @@
+<div class="chatroom-container">
+  <mat-toolbar color="primary">
+    <button mat-icon-button (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <span>Support Chat</span>
+    <span class="spacer"></span>
+    <mat-chip [color]="isConnected ? 'primary' : 'warn'">
+      <mat-icon>{{ isConnected ? 'wifi' : 'wifi_off' }}</mat-icon>
+      {{ isConnected ? 'Connected' : 'Disconnected' }}
+    </mat-chip>
+  </mat-toolbar>
+
+  <div class="chat-content">
+    <div class="ticket-info">
+      <span>Ticket: {{ ticketId | slice:0:8 }}...</span>
+    </div>
+
+    <div class="messages-container" #messagesContainer>
+      <div *ngIf="messages.length === 0" class="no-messages">
+        <mat-icon>chat_bubble_outline</mat-icon>
+        <p>No messages yet. Start the conversation!</p>
+      </div>
+
+      <div *ngFor="let message of messages" 
+           class="message-wrapper"
+           [ngClass]="{ 'my-message': isMyMessage(message), 'other-message': !isMyMessage(message) }">
+        
+        <div class="message-bubble">
+          <div class="message-header">
+            <span class="sender-name">{{ getSenderDisplayName(message.senderType) }}</span>
+            <span class="message-time">{{ formatTime(message.createdAt) }}</span>
+          </div>
+          <div class="message-content">{{ message.content }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="message-input-container">
+      <form [formGroup]="messageForm" (ngSubmit)="sendMessage()" class="message-form">
+        <mat-form-field appearance="outline" class="message-input">
+          <mat-label>Type your message...</mat-label>
+          <input 
+            matInput 
+            formControlName="message" 
+            (keydown.enter)="sendMessage()"
+            [disabled]="!isConnected"
+            placeholder="Type your message here">
+        </mat-form-field>
+        
+        <button 
+          mat-fab 
+          color="primary" 
+          type="submit"
+          [disabled]="messageForm.invalid || !isConnected"
+          class="send-button">
+          <mat-icon>send</mat-icon>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

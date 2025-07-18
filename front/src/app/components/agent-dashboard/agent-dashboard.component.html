@@ -1,0 +1,63 @@
+<div class="dashboard-container">
+  <mat-toolbar color="primary">
+    <span>Agent Dashboard</span>
+    <span class="spacer"></span>
+    <button mat-button (click)="logout()">
+      <mat-icon>logout</mat-icon>
+      Logout
+    </button>
+  </mat-toolbar>
+
+  <div class="content">
+    <div class="header">
+      <h2>Open Support Tickets</h2>
+      <mat-chip [matBadge]="tickets.length" matBadgeColor="accent">
+        Total Tickets
+      </mat-chip>
+    </div>
+
+    <div class="tickets-grid">
+      <mat-card *ngFor="let ticket of tickets" class="ticket-card">
+        <mat-card-header>
+          <div mat-card-avatar class="ticket-avatar">
+            <mat-icon>support_agent</mat-icon>
+          </div>
+          <mat-card-title>{{ ticket.issueType | titlecase }}</mat-card-title>
+          <mat-card-subtitle>{{ ticket.clientId }}</mat-card-subtitle>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <div class="ticket-info">
+            <div class="info-row">
+              <span class="label">Ticket ID:</span>
+              <span class="value">{{ ticket.ticketId | slice:0:8 }}...</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Created:</span>
+              <span class="value">{{ formatDate(ticket.createdAt) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Status:</span>
+              <mat-chip [color]="getStatusColor(ticket.status)">
+                {{ ticket.status | titlecase }}
+              </mat-chip>
+            </div>
+          </div>
+        </mat-card-content>
+        
+        <mat-card-actions>
+          <button mat-raised-button color="primary" (click)="joinTicket(ticket.ticketId)">
+            <mat-icon>chat</mat-icon>
+            Join Chat
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+
+    <div *ngIf="tickets.length === 0" class="no-tickets">
+      <mat-icon>inbox</mat-icon>
+      <h3>No open tickets</h3>
+      <p>All tickets have been resolved!</p>
+    </div>
+  </div>
+</div>

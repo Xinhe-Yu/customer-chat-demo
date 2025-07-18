@@ -1,0 +1,92 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { TicketService } from '../../services/ticket.service';
+import { AuthService } from '../../services/auth.service';
+
+@Component({
+  selector: 'app-client-dashboard',
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatCardModule,
+    MatButtonModule,
+    MatToolbarModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatSnackBarModule
+  ],
+  templateUrl: './client-dashboard.component.html',
+  styleUrl: './client-dashboard.component.scss'
+})
+export class ClientDashboardComponent {
+  ticketForm: FormGroup;
+  isLoading = false;
+  
+  issueTypes = [
+    { value: 'payment', label: 'Payment Issues', icon: 'payment' },
+    { value: 'technical', label: 'Technical Support', icon: 'build' },
+    { value: 'billing', label: 'Billing Questions', icon: 'receipt' },
+    { value: 'account', label: 'Account Management', icon: 'person' },
+    { value: 'general', label: 'General Inquiry', icon: 'help' }
+  ];
+
+  constructor(
+    private fb: FormBuilder,
+    private ticketService: TicketService,
+    private authService: AuthService,
+    private router: Router,
+    private snackBar: MatSnackBar
+  ) {
+    this.ticketForm = this.fb.group({
+      issueType: ['', Validators.required]
+    });
+  }
+
+  createTicket(): void {
+    if (this.ticketForm.invalid) return;
+
+    this.isLoading = true;
+    const { issueType } = this.ticketForm.value;
+
+    this.ticketService.createTicket({ issueType }).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        this.snackBar.open('Ticket created successfully! Redirecting to chat...', 'Close', {
+          duration: 2000
+        });
+        setTimeout(() => {
+          this.router.navigate(['/chatroom', response.ticketId]);
+        }, 2000);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        this.snackBar.open('Failed to create ticket. Please try again.', 'Close', {
+          duration: 3000
+        });
+        console.error('Create ticket error:', error);
+      }
+    });
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
+  }
+
+  getSelectedIssueType() {
+    const selectedValue = this.ticketForm.get('issueType')?.value;
+    return this.issueTypes.find(type => type.value === selectedValue);
+  }
+}

@@ -1,0 +1,91 @@
+<div class="dashboard-container">
+  <mat-toolbar color="primary">
+    <span>Client Dashboard</span>
+    <span class="spacer"></span>
+    <button mat-button (click)="logout()">
+      <mat-icon>logout</mat-icon>
+      Logout
+    </button>
+  </mat-toolbar>
+
+  <div class="content">
+    <div class="welcome-section">
+      <h1>Welcome to Customer Support</h1>
+      <p>Need help? Create a support ticket and our team will assist you shortly.</p>
+    </div>
+
+    <mat-card class="create-ticket-card">
+      <mat-card-header>
+        <div mat-card-avatar class="ticket-avatar">
+          <mat-icon>add_circle</mat-icon>
+        </div>
+        <mat-card-title>Create New Support Ticket</mat-card-title>
+        <mat-card-subtitle>Select your issue type to get started</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <form [formGroup]="ticketForm" (ngSubmit)="createTicket()">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>What can we help you with?</mat-label>
+            <mat-select formControlName="issueType">
+              <mat-option *ngFor="let type of issueTypes" [value]="type.value">
+                <div class="option-content">
+                  <mat-icon>{{ type.icon }}</mat-icon>
+                  <span>{{ type.label }}</span>
+                </div>
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <div *ngIf="getSelectedIssueType()" class="selected-type-preview">
+            <div class="preview-header">
+              <mat-icon [color]="'primary'">{{ getSelectedIssueType()!.icon }}</mat-icon>
+              <span>{{ getSelectedIssueType()!.label }}</span>
+            </div>
+            <p>You'll be connected with a support agent who specializes in {{ getSelectedIssueType()!.label.toLowerCase() }}.</p>
+          </div>
+        </form>
+      </mat-card-content>
+
+      <mat-card-actions>
+        <button 
+          mat-raised-button 
+          color="primary" 
+          [disabled]="ticketForm.invalid || isLoading"
+          (click)="createTicket()"
+          class="create-button">
+          <mat-spinner *ngIf="isLoading" diameter="20"></mat-spinner>
+          <mat-icon *ngIf="!isLoading">chat</mat-icon>
+          <span *ngIf="!isLoading">Start Chat</span>
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <div class="info-section">
+      <h3>How it works</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Select Issue Type</h4>
+            <p>Choose the category that best describes your issue</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Start Chat</h4>
+            <p>You'll be connected to a qualified support agent</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Get Help</h4>
+            <p>Work with our team to resolve your issue quickly</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
