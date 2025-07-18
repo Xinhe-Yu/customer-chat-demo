@@ -18,7 +18,7 @@
       <mat-tab label="Create New Ticket">
         <div class="tab-content">
           <mat-card class="create-ticket-card">
-            <mat-card-header>
+            <mat-card-header class="mb-4">
               <div mat-card-avatar class="ticket-avatar">
                 <mat-icon>add_circle</mat-icon>
               </div>
@@ -31,6 +31,9 @@
                 <mat-form-field appearance="outline" class="full-width">
                   <mat-label>What can we help you with?</mat-label>
                   <mat-select formControlName="issueType">
+                    <mat-select-trigger>
+                      <span>{{ getSelectedIssueType()?.label }}</span>
+                    </mat-select-trigger>
                     <mat-option *ngFor="let type of issueTypes" [value]="type.value">
                       <div class="option-content">
                         <mat-icon>{{ type.icon }}</mat-icon>
@@ -45,17 +48,14 @@
                     <mat-icon [color]="'primary'">{{ getSelectedIssueType()!.icon }}</mat-icon>
                     <span>{{ getSelectedIssueType()!.label }}</span>
                   </div>
-                  <p>You'll be connected with a support agent who specializes in {{ getSelectedIssueType()!.label.toLowerCase() }}.</p>
+                  <p>You'll be connected with a support agent who specializes in {{
+                    getSelectedIssueType()!.label.toLowerCase() }}.</p>
                 </div>
               </form>
             </mat-card-content>
 
-            <mat-card-actions>
-              <button 
-                mat-raised-button 
-                color="primary" 
-                [disabled]="ticketForm.invalid || isLoading"
-                (click)="createTicket()"
+            <mat-card-actions class="center-actions mt-4 mb-4">
+              <button mat-raised-button color="primary" [disabled]="!canCreateTicket()" (click)="createTicket()"
                 class="create-button">
                 <mat-spinner *ngIf="isLoading" diameter="20"></mat-spinner>
                 <mat-icon *ngIf="!isLoading">chat</mat-icon>
@@ -110,10 +110,10 @@
             <mat-card *ngFor="let ticket of historicalTickets" class="ticket-card">
               <mat-card-header>
                 <div mat-card-avatar class="ticket-avatar">
-                  <mat-icon>{{ ticket.issueType === 'payment' ? 'payment' : 
-                                ticket.issueType === 'technical' ? 'build' : 
-                                ticket.issueType === 'billing' ? 'receipt' : 
-                                ticket.issueType === 'account' ? 'person' : 'help' }}</mat-icon>
+                  <mat-icon>{{ ticket.issueType === 'payment' ? 'payment' :
+                    ticket.issueType === 'technical' ? 'build' :
+                    ticket.issueType === 'billing' ? 'receipt' :
+                    ticket.issueType === 'account' ? 'person' : 'help' }}</mat-icon>
                 </div>
                 <mat-card-title>{{ ticket.issueType | titlecase }} Support</mat-card-title>
                 <mat-card-subtitle>Created: {{ formatDate(ticket.createdAt) }}</mat-card-subtitle>
@@ -125,7 +125,7 @@
                     {{ ticket.status }}
                   </mat-chip>
                 </div>
-                
+
                 <div class="message-count">
                   <mat-icon>chat</mat-icon>
                   <span>{{ ticket.messages.length }} messages</span>

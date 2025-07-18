@@ -128,4 +128,8 @@ export class ClientDashboardComponent implements OnInit {
   formatDate(dateString: string): string {
     return new Date(dateString).toLocaleString();
   }
+
+  canCreateTicket(): boolean {
+    return this.ticketForm.valid && !this.isLoading;
+  }
 }

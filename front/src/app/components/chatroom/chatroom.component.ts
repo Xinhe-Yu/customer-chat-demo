@@ -55,6 +55,9 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.messageForm = this.fb.group({
       message: ['', [Validators.required, Validators.minLength(1)]]
     });
+
+    // Initially disable the form until connected
+    this.updateFormState();
   }
 
   ngOnInit(): void {
@@ -133,12 +136,14 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
 
       const connectionSub = this.websocketService.connectionStatus$.subscribe(status => {
         this.isConnected = status;
+        this.updateFormState();
       });
 
       this.subscriptions.push(messagesSub, connectionSub);
     } catch (error) {
       console.error('WebSocket connection failed:', error);
       this.isConnected = false;
+      this.updateFormState();
     }
   }
 
@@ -184,7 +189,7 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   getSenderDisplayName(senderType: string): string {
-    if (senderType === 'SYSTEM') return 'System';
+    if (senderType === 'SYSTEM') return 'Your Car Your Way Support Team';
     return senderType === 'CLIENT' ? 'Customer' : 'Support Agent';
   }
 
@@ -230,5 +235,18 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   isSystemMessage(message: ChatMessage): boolean {
     return message.senderType === 'SYSTEM';
+  }
+
+  private updateFormState(): void {
+    const messageControl = this.messageForm.get('message');
+    if (this.isConnected) {
+      messageControl?.enable();
+    } else {
+      messageControl?.disable();
+    }
+  }
+
+  canSendMessage(): boolean {
+    return this.messageForm.valid && this.isConnected && !!this.currentUser;
   }
 }

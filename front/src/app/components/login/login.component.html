@@ -35,7 +35,7 @@
             mat-raised-button 
             color="primary" 
             type="submit" 
-            [disabled]="loginForm.invalid || isLoading"
+            [disabled]="!canLogin()"
             class="full-width">
             <mat-spinner *ngIf="isLoading" diameter="20"></mat-spinner>
             <span *ngIf="!isLoading">Login</span>

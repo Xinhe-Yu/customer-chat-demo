@@ -43,7 +43,7 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private ticketService: TicketService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadTickets();
@@ -75,7 +75,7 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
   private async connectWebSocket(): Promise<void> {
     try {
       await this.websocketService.connect();
-      
+
       const agentTicketsSub = this.websocketService.subscribeToAgentTickets().subscribe({
         next: (ticketUpdate) => {
           console.log('New ticket update:', ticketUpdate);
@@ -90,7 +90,7 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
         },
         error: (error) => console.error('Agent tickets subscription error:', error)
       });
-      
+
       this.subscriptions.push(agentTicketsSub);
     } catch (error) {
       console.error('WebSocket connection failed:', error);

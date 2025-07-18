@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <title>Front</title>
@@ -10,48 +11,49 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <script>
     // Early polyfills for Node.js globals - must load before any modules
-    (function() {
+    (function () {
       'use strict';
-      
+
       // Set global reference
       if (typeof window !== 'undefined') {
         window.global = window.global || window;
-        
+
         // Process polyfill
         window.process = window.process || {
           env: {},
-          nextTick: function(fn) { 
+          nextTick: function (fn) {
             if (typeof fn === 'function') {
-              setTimeout(fn, 0); 
+              setTimeout(fn, 0);
             }
           },
-          cwd: function() { return '/'; },
+          cwd: function () { return '/'; },
           versions: { node: '18.0.0' },
           browser: true,
           platform: 'browser'
         };
-        
+
         // Buffer polyfill
         window.Buffer = window.Buffer || {
-          isBuffer: function() { return false; },
-          from: function(data) { return data; },
-          alloc: function(size) { return new Uint8Array(size || 0); },
-          allocUnsafe: function(size) { return new Uint8Array(size || 0); }
+          isBuffer: function () { return false; },
+          from: function (data) { return data; },
+          alloc: function (size) { return new Uint8Array(size || 0); },
+          allocUnsafe: function (size) { return new Uint8Array(size || 0); }
         };
-        
+
         // Make sure global points to window
         if (typeof globalThis !== 'undefined') {
           globalThis.global = globalThis.global || globalThis;
           globalThis.process = globalThis.process || window.process;
           globalThis.Buffer = globalThis.Buffer || window.Buffer;
         }
-        
-        console.log('Global polyfills loaded successfully');
+
       }
     })();
   </script>
 </head>
+
 <body class="mat-typography">
   <app-root></app-root>
 </body>
+
 </html>

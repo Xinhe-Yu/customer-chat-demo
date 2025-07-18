@@ -74,4 +74,8 @@ export class LoginComponent {
   get roleControl() { return this.loginForm.get('role'); }
   get identifierControl() { return this.loginForm.get('identifier'); }
   get passwordControl() { return this.loginForm.get('password'); }
+
+  canLogin(): boolean {
+    return this.loginForm.valid && !this.isLoading;
+  }
 }
