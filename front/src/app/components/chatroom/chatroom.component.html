@@ -17,14 +17,13 @@
     </div>
 
     <div class="messages-container" #messagesContainer>
-      <div *ngIf="messages.length === 0" class="no-messages">
-        <mat-icon>chat_bubble_outline</mat-icon>
-        <p>No messages yet. Start the conversation!</p>
-      </div>
-
       <div *ngFor="let message of messages" 
            class="message-wrapper"
-           [ngClass]="{ 'my-message': isMyMessage(message), 'other-message': !isMyMessage(message) }">
+           [ngClass]="{ 
+             'my-message': isMyMessage(message), 
+             'other-message': !isMyMessage(message) && !isSystemMessage(message),
+             'system-message': isSystemMessage(message)
+           }">
         
         <div class="message-bubble">
           <div class="message-header">

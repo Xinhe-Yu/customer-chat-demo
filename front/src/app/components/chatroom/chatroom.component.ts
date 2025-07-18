@@ -34,7 +34,7 @@ import { Subscription } from 'rxjs';
 })
 export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('messagesContainer') messagesContainer!: ElementRef;
-  
+
   ticketId!: string;
   messageForm: FormGroup;
   messages: ChatMessage[] = [];
@@ -42,6 +42,7 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
   isConnected = false;
   private subscriptions: Subscription[] = [];
   private shouldScrollToBottom = false;
+  private welcomeMessageAdded = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -65,9 +66,12 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
+      // Load ticket history after user is loaded
+      if (user) {
+        this.loadTicketHistory();
+      }
     });
 
-    this.loadTicketHistory();
     this.connectWebSocket();
   }
 
@@ -84,6 +88,8 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   private loadTicketHistory(): void {
+    console.log('Loading ticket history for user:', this.currentUser?.role); // Debug log
+
     this.ticketService.getTicket(this.ticketId).subscribe({
       next: (ticket) => {
         this.messages = ticket.messages.map(msg => ({
@@ -91,11 +97,20 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
           content: msg.content,
           createdAt: msg.createdAt
         }));
+
+        console.log('Loaded messages:', this.messages.length); // Debug log
+
+        // Add welcome message if no messages exist
+        if (this.messages.length === 0) {
+          this.addWelcomeMessage();
+        }
+
         this.shouldScrollToBottom = true;
       },
       error: (error) => {
         console.error('Failed to load ticket history:', error);
         this.messages = [];
+        this.addWelcomeMessage();
       }
     });
   }
@@ -169,6 +184,51 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   getSenderDisplayName(senderType: string): string {
+    if (senderType === 'SYSTEM') return 'System';
     return senderType === 'CLIENT' ? 'Customer' : 'Support Agent';
+  }
+
+  private addWelcomeMessage(): void {
+    if (this.welcomeMessageAdded || !this.currentUser) return;
+
+    // Only show welcome messages for clients
+    if (this.currentUser.role !== 'CLIENT') return;
+
+    console.log('Adding welcome message for client'); // Debug log
+
+    const welcomeMessages = this.getWelcomeMessages();
+
+    welcomeMessages.forEach((messageContent, index) => {
+      setTimeout(() => {
+        this.messages.push({
+          senderType: 'SYSTEM',
+          content: messageContent,
+          createdAt: new Date().toISOString()
+        });
+        this.shouldScrollToBottom = true;
+      }, index * 1000); // Stagger messages by 1 second
+    });
+
+    this.welcomeMessageAdded = true;
+  }
+
+  private getWelcomeMessages(): string[] {
+    if (this.currentUser?.role === 'CLIENT') {
+      return [
+        "Hello! Welcome to our support chat. 👋",
+        "I'm here to help you with any questions or issues you may have.",
+        "Please describe your problem and I'll assist you as soon as possible!"
+      ];
+    } else if (this.currentUser?.role === 'AGENT') {
+      return [
+        "You've joined this support ticket.",
+        "Review the ticket details and start helping the customer!"
+      ];
+    }
+    return ["Welcome to the support chat!"];
+  }
+
+  isSystemMessage(message: ChatMessage): boolean {
+    return message.senderType === 'SYSTEM';
   }
 }

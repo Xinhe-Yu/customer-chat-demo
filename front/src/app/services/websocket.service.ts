@@ -5,7 +5,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { AuthService } from './auth.service';
 
 export interface ChatMessage {
-  senderType: 'CLIENT' | 'AGENT';
+  senderType: 'CLIENT' | 'AGENT' | 'SYSTEM';
   content: string;
   createdAt?: string;
 }
@@ -18,7 +18,7 @@ export class WebsocketService {
   private connectionStatus = new BehaviorSubject<boolean>(false);
   public connectionStatus$ = this.connectionStatus.asObservable();
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   connect(): Promise<void> {
     return new Promise((resolve, reject) => {
