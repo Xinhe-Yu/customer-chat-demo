@@ -18,4 +18,7 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
   @Query("SELECT DISTINCT t FROM Ticket t LEFT JOIN FETCH t.messages ORDER BY t.createdAt DESC")
   List<Ticket> findAllWithMessages();
 
+  @Query("SELECT DISTINCT t FROM Ticket t LEFT JOIN FETCH t.messages WHERE t.client.id = :clientId ORDER BY t.createdAt DESC")
+  List<Ticket> findByClientIdWithMessages(@Param("clientId") UUID clientId);
+
 }

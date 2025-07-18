@@ -14,78 +14,134 @@
       <p>Need help? Create a support ticket and our team will assist you shortly.</p>
     </div>
 
-    <mat-card class="create-ticket-card">
-      <mat-card-header>
-        <div mat-card-avatar class="ticket-avatar">
-          <mat-icon>add_circle</mat-icon>
-        </div>
-        <mat-card-title>Create New Support Ticket</mat-card-title>
-        <mat-card-subtitle>Select your issue type to get started</mat-card-subtitle>
-      </mat-card-header>
+    <mat-tab-group>
+      <mat-tab label="Create New Ticket">
+        <div class="tab-content">
+          <mat-card class="create-ticket-card">
+            <mat-card-header>
+              <div mat-card-avatar class="ticket-avatar">
+                <mat-icon>add_circle</mat-icon>
+              </div>
+              <mat-card-title>Create New Support Ticket</mat-card-title>
+              <mat-card-subtitle>Select your issue type to get started</mat-card-subtitle>
+            </mat-card-header>
 
-      <mat-card-content>
-        <form [formGroup]="ticketForm" (ngSubmit)="createTicket()">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>What can we help you with?</mat-label>
-            <mat-select formControlName="issueType">
-              <mat-option *ngFor="let type of issueTypes" [value]="type.value">
-                <div class="option-content">
-                  <mat-icon>{{ type.icon }}</mat-icon>
-                  <span>{{ type.label }}</span>
+            <mat-card-content>
+              <form [formGroup]="ticketForm" (ngSubmit)="createTicket()">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>What can we help you with?</mat-label>
+                  <mat-select formControlName="issueType">
+                    <mat-option *ngFor="let type of issueTypes" [value]="type.value">
+                      <div class="option-content">
+                        <mat-icon>{{ type.icon }}</mat-icon>
+                        <span>{{ type.label }}</span>
+                      </div>
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <div *ngIf="getSelectedIssueType()" class="selected-type-preview">
+                  <div class="preview-header">
+                    <mat-icon [color]="'primary'">{{ getSelectedIssueType()!.icon }}</mat-icon>
+                    <span>{{ getSelectedIssueType()!.label }}</span>
+                  </div>
+                  <p>You'll be connected with a support agent who specializes in {{ getSelectedIssueType()!.label.toLowerCase() }}.</p>
                 </div>
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
+              </form>
+            </mat-card-content>
 
-          <div *ngIf="getSelectedIssueType()" class="selected-type-preview">
-            <div class="preview-header">
-              <mat-icon [color]="'primary'">{{ getSelectedIssueType()!.icon }}</mat-icon>
-              <span>{{ getSelectedIssueType()!.label }}</span>
+            <mat-card-actions>
+              <button 
+                mat-raised-button 
+                color="primary" 
+                [disabled]="ticketForm.invalid || isLoading"
+                (click)="createTicket()"
+                class="create-button">
+                <mat-spinner *ngIf="isLoading" diameter="20"></mat-spinner>
+                <mat-icon *ngIf="!isLoading">chat</mat-icon>
+                <span *ngIf="!isLoading">Start Chat</span>
+              </button>
+            </mat-card-actions>
+          </mat-card>
+
+          <div class="info-section">
+            <h3>How it works</h3>
+            <div class="steps">
+              <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                  <h4>Select Issue Type</h4>
+                  <p>Choose the category that best describes your issue</p>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                  <h4>Start Chat</h4>
+                  <p>You'll be connected to a qualified support agent</p>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                  <h4>Get Help</h4>
+                  <p>Work with our team to resolve your issue quickly</p>
+                </div>
+              </div>
             </div>
-            <p>You'll be connected with a support agent who specializes in {{ getSelectedIssueType()!.label.toLowerCase() }}.</p>
           </div>
-        </form>
-      </mat-card-content>
+        </div>
+      </mat-tab>
 
-      <mat-card-actions>
-        <button 
-          mat-raised-button 
-          color="primary" 
-          [disabled]="ticketForm.invalid || isLoading"
-          (click)="createTicket()"
-          class="create-button">
-          <mat-spinner *ngIf="isLoading" diameter="20"></mat-spinner>
-          <mat-icon *ngIf="!isLoading">chat</mat-icon>
-          <span *ngIf="!isLoading">Start Chat</span>
-        </button>
-      </mat-card-actions>
-    </mat-card>
+      <mat-tab label="My Tickets" [matBadge]="historicalTickets.length" matBadgeColor="accent">
+        <div class="tab-content">
+          <div class="tickets-header">
+            <h2>Your Support Tickets</h2>
+            <p>View and manage your support tickets</p>
+          </div>
 
-    <div class="info-section">
-      <h3>How it works</h3>
-      <div class="steps">
-        <div class="step">
-          <div class="step-number">1</div>
-          <div class="step-content">
-            <h4>Select Issue Type</h4>
-            <p>Choose the category that best describes your issue</p>
+          <div *ngIf="historicalTickets.length === 0" class="no-tickets">
+            <mat-icon>support_agent</mat-icon>
+            <h3>No tickets yet</h3>
+            <p>Create your first support ticket to get started</p>
+          </div>
+
+          <div *ngIf="historicalTickets.length > 0" class="tickets-grid">
+            <mat-card *ngFor="let ticket of historicalTickets" class="ticket-card">
+              <mat-card-header>
+                <div mat-card-avatar class="ticket-avatar">
+                  <mat-icon>{{ ticket.issueType === 'payment' ? 'payment' : 
+                                ticket.issueType === 'technical' ? 'build' : 
+                                ticket.issueType === 'billing' ? 'receipt' : 
+                                ticket.issueType === 'account' ? 'person' : 'help' }}</mat-icon>
+                </div>
+                <mat-card-title>{{ ticket.issueType | titlecase }} Support</mat-card-title>
+                <mat-card-subtitle>Created: {{ formatDate(ticket.createdAt) }}</mat-card-subtitle>
+              </mat-card-header>
+
+              <mat-card-content>
+                <div class="ticket-status">
+                  <mat-chip [color]="getStatusColor(ticket.status)">
+                    {{ ticket.status }}
+                  </mat-chip>
+                </div>
+                
+                <div class="message-count">
+                  <mat-icon>chat</mat-icon>
+                  <span>{{ ticket.messages.length }} messages</span>
+                </div>
+              </mat-card-content>
+
+              <mat-card-actions>
+                <button mat-button color="primary" (click)="openTicket(ticket.ticketId)">
+                  <mat-icon>chat</mat-icon>
+                  Open Chat
+                </button>
+              </mat-card-actions>
+            </mat-card>
           </div>
         </div>
-        <div class="step">
-          <div class="step-number">2</div>
-          <div class="step-content">
-            <h4>Start Chat</h4>
-            <p>You'll be connected to a qualified support agent</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-number">3</div>
-          <div class="step-content">
-            <h4>Get Help</h4>
-            <p>Work with our team to resolve your issue quickly</p>
-          </div>
-        </div>
-      </div>
-    </div>
+      </mat-tab>
+    </mat-tab-group>
   </div>
 </div>

@@ -59,4 +59,30 @@ public class TicketController {
         ticket.getCreatedAt().toString());
     return ResponseEntity.ok(response);
   }
+
+  @GetMapping("/client/my-tickets")
+  public ResponseEntity<List<TicketDetailResponseDto>> getClientTickets(
+      @AuthenticationPrincipal ClientDetails clientDetails) {
+    
+    List<TicketDetailResponseDto> tickets = ticketService.getClientTicketsWithMessages(clientDetails.getId()).stream()
+        .map(ticket -> {
+          List<MessageDto> messageDtos = ticket.getMessages().stream()
+              .map(m -> new MessageDto(
+                  m.getAgent() == null ? "CLIENT" : "AGENT",
+                  m.getMessage(),
+                  m.getCreatedAt().toString()))
+              .toList();
+          
+          return new TicketDetailResponseDto(
+              ticket.getId().toString(),
+              ticket.getStatus(),
+              ticket.getIssueType(),
+              messageDtos,
+              ticket.getCreatedAt().toString()
+          );
+        })
+        .toList();
+    
+    return ResponseEntity.ok(tickets);
+  }
 }

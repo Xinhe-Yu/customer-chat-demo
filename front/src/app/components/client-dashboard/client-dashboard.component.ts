@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -10,7 +10,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { TicketService } from '../../services/ticket.service';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatBadgeModule } from '@angular/material/badge';
+import { TicketService, Ticket } from '../../services/ticket.service';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -25,14 +28,18 @@ import { AuthService } from '../../services/auth.service';
     MatSelectModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatTabsModule,
+    MatChipsModule,
+    MatBadgeModule
   ],
   templateUrl: './client-dashboard.component.html',
   styleUrl: './client-dashboard.component.scss'
 })
-export class ClientDashboardComponent {
+export class ClientDashboardComponent implements OnInit {
   ticketForm: FormGroup;
   isLoading = false;
+  historicalTickets: Ticket[] = [];
   
   issueTypes = [
     { value: 'payment', label: 'Payment Issues', icon: 'payment' },
@@ -51,6 +58,21 @@ export class ClientDashboardComponent {
   ) {
     this.ticketForm = this.fb.group({
       issueType: ['', Validators.required]
+    });
+  }
+
+  ngOnInit(): void {
+    this.loadHistoricalTickets();
+  }
+
+  loadHistoricalTickets(): void {
+    this.ticketService.getClientTickets().subscribe({
+      next: (tickets) => {
+        this.historicalTickets = tickets;
+      },
+      error: (error) => {
+        console.error('Error loading historical tickets:', error);
+      }
     });
   }
 
@@ -88,5 +110,22 @@ export class ClientDashboardComponent {
   getSelectedIssueType() {
     const selectedValue = this.ticketForm.get('issueType')?.value;
     return this.issueTypes.find(type => type.value === selectedValue);
+  }
+
+  openTicket(ticketId: string): void {
+    this.router.navigate(['/chatroom', ticketId]);
+  }
+
+  getStatusColor(status: string): string {
+    switch (status) {
+      case 'OPEN': return 'primary';
+      case 'IN_PROGRESS': return 'accent';
+      case 'CLOSED': return 'warn';
+      default: return 'primary';
+    }
+  }
+
+  formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleString();
   }
 }

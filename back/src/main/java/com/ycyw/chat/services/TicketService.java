@@ -48,4 +48,8 @@ public class TicketService {
   public List<Ticket> getAllTicketsWithMessages() {
     return ticketRepo.findAllWithMessages();
   }
+
+  public List<Ticket> getClientTicketsWithMessages(UUID clientId) {
+    return ticketRepo.findByClientIdWithMessages(clientId);
+  }
 }
