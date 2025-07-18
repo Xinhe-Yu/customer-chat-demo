@@ -39,3 +39,17 @@ INSERT INTO agents (
     '11111111-1111-1111-1111-111111111111',
     'customer_service'
 );
+
+INSERT INTO agents (
+    id,
+    secret,
+    agent_data,
+    agency_id,
+    role
+) VALUES (
+    '88888888-8888-8888-8888-888888888888',
+    '$2a$10$GgLND/IyzmasZu5Cn7rxWe2gf9EB1Pp1ecRwRmBr0DIttSPhAhVVG',
+    '{"name": "Guillaume"}'::jsonb,
+    '11111111-1111-1111-1111-111111111111',
+    'customer_service'
+);

@@ -120,15 +120,16 @@
               </mat-card-header>
 
               <mat-card-content>
-                <div class="ticket-status">
-                  <mat-chip [color]="getStatusColor(ticket.status)">
-                    {{ ticket.status }}
-                  </mat-chip>
-                </div>
-
-                <div class="message-count">
-                  <mat-icon>chat</mat-icon>
-                  <span>{{ ticket.messages.length }} messages</span>
+                <div class="ticket-info-row">
+                  <div class="message-count">
+                    <mat-icon>chat</mat-icon>
+                    <span>{{ ticket.messages.length }} messages</span>
+                  </div>
+                  <div class="ticket-status">
+                    <mat-chip [color]="getStatusColor(ticket.status)">
+                      {{ formatStatus(ticket.status) }}
+                    </mat-chip>
+                  </div>
                 </div>
               </mat-card-content>
 
@@ -136,6 +137,15 @@
                 <button mat-button color="primary" (click)="openTicket(ticket.ticketId)">
                   <mat-icon>chat</mat-icon>
                   Open Chat
+                </button>
+                <button 
+                  mat-button 
+                  color="accent" 
+                  (click)="resolveTicket(ticket.ticketId)"
+                  [disabled]="ticket.status === 'resolved' || ticket.status === 'closed'"
+                  *ngIf="ticket.status !== 'resolved' && ticket.status !== 'closed'">
+                  <mat-icon>check_circle</mat-icon>
+                  Mark as Resolved
                 </button>
               </mat-card-actions>
             </mat-card>

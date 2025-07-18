@@ -7,6 +7,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class MessageDto {
   private String senderType;
+  private String senderName;
   private String content;
   private String createdAt;
 }

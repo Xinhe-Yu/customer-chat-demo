@@ -13,6 +13,7 @@ export interface CreateTicketResponse {
 export interface Message {
   id: string;
   senderType: 'CLIENT' | 'AGENT';
+  senderName: string;
   content: string;
   createdAt: string;
 }
@@ -21,6 +22,8 @@ export interface Ticket {
   ticketId: string;
   status: string;
   issueType: string;
+  clientName: string;
+  agentName?: string;
   messages: Message[];
   createdAt: string;
 }
@@ -42,10 +45,27 @@ export class TicketService {
   }
 
   getAllTickets(): Observable<Ticket[]> {
-    return this.http.get<Ticket[]>(`${this.apiUrl}/agent/tickets`);
+    return this.http.get<Ticket[]>(`${this.apiUrl}/tickets/available`);
   }
 
-  getClientTickets(): Observable<Ticket[]> {
-    return this.http.get<Ticket[]>(`${this.apiUrl}/tickets/client/my-tickets`);
+  getMyTickets(): Observable<Ticket[]> {
+    return this.http.get<Ticket[]>(`${this.apiUrl}/tickets/my-tickets`);
+  }
+
+  updateTicketStatus(ticketId: string, status: string): Observable<Ticket> {
+    return this.http.post<Ticket>(`${this.apiUrl}/tickets/${ticketId}/status`, { status });
+  }
+
+  // Convenience methods for specific status updates
+  joinTicket(ticketId: string): Observable<Ticket> {
+    return this.updateTicketStatus(ticketId, 'IN_PROGRESS');
+  }
+
+  resolveTicket(ticketId: string): Observable<Ticket> {
+    return this.updateTicketStatus(ticketId, 'RESOLVED');
+  }
+
+  closeTicket(ticketId: string): Observable<Ticket> {
+    return this.updateTicketStatus(ticketId, 'CLOSED');
   }
 }

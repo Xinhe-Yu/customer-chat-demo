@@ -5,6 +5,14 @@
     </button>
     <span>Support Chat</span>
     <span class="spacer"></span>
+    <button 
+      mat-button 
+      color="accent" 
+      (click)="resolveTicket()"
+      *ngIf="currentUser?.role === 'CLIENT' && canResolveTicket()">
+      <mat-icon>check_circle</mat-icon>
+      Mark as Resolved
+    </button>
     <mat-chip [color]="isConnected ? 'primary' : 'warn'">
       <mat-icon>{{ isConnected ? 'wifi' : 'wifi_off' }}</mat-icon>
       {{ isConnected ? 'Connected' : 'Disconnected' }}
@@ -25,7 +33,7 @@
 
         <div class="message-bubble">
           <div class="message-header">
-            <span class="sender-name">{{ getSenderDisplayName(message.senderType) }}</span>
+            <span class="sender-name">{{ getSenderDisplayName(message) }}</span>
             <span class="message-time">{{ formatTime(message.createdAt) }}</span>
           </div>
           <div class="message-content">{{ message.content }}</div>

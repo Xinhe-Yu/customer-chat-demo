@@ -57,11 +57,18 @@ CREATE TABLE reservations (
 CREATE TABLE support_tickets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     client_id UUID REFERENCES clients(id),
+    agent_id UUID REFERENCES agents(id),
     issue_type VARCHAR(100),
     status VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE support_tickets ADD CONSTRAINT fk_support_tickets_agent_id
+    FOREIGN KEY (agent_id) REFERENCES agents(id);
+
+-- Add index for performance
+CREATE INDEX idx_support_tickets_agent_id ON support_tickets(agent_id);
 
 -- Table: messages
 CREATE TABLE messages (

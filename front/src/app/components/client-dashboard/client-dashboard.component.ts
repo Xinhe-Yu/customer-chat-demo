@@ -66,7 +66,7 @@ export class ClientDashboardComponent implements OnInit {
   }
 
   loadHistoricalTickets(): void {
-    this.ticketService.getClientTickets().subscribe({
+    this.ticketService.getMyTickets().subscribe({
       next: (tickets) => {
         this.historicalTickets = tickets;
       },
@@ -117,11 +117,22 @@ export class ClientDashboardComponent implements OnInit {
   }
 
   getStatusColor(status: string): string {
-    switch (status) {
-      case 'OPEN': return 'primary';
-      case 'IN_PROGRESS': return 'accent';
-      case 'CLOSED': return 'warn';
+    switch (status.toLowerCase()) {
+      case 'open': return 'primary';
+      case 'in_progress': return 'accent';
+      case 'resolved': return 'warn';
+      case 'closed': return 'warn';
       default: return 'primary';
+    }
+  }
+
+  formatStatus(status: string): string {
+    switch (status.toLowerCase()) {
+      case 'open': return 'Open';
+      case 'in_progress': return 'In Progress';
+      case 'resolved': return 'Resolved';
+      case 'closed': return 'Closed';
+      default: return status;
     }
   }
 
@@ -131,5 +142,30 @@ export class ClientDashboardComponent implements OnInit {
 
   canCreateTicket(): boolean {
     return this.ticketForm.valid && !this.isLoading;
+  }
+
+  resolveTicket(ticketId: string): void {
+    this.ticketService.resolveTicket(ticketId).subscribe({
+      next: (resolvedTicket) => {
+        console.log('Ticket resolved:', resolvedTicket);
+        // Update the ticket in the local array
+        const ticketIndex = this.historicalTickets.findIndex(t => t.ticketId === ticketId);
+        if (ticketIndex !== -1) {
+          this.historicalTickets[ticketIndex].status = resolvedTicket.status;
+        }
+        // Show success message
+        this.snackBar.open('Ticket marked as resolved!', 'Close', {
+          duration: 3000,
+          panelClass: ['success-snackbar']
+        });
+      },
+      error: (error) => {
+        console.error('Error resolving ticket:', error);
+        this.snackBar.open('Failed to resolve ticket. Please try again.', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
+      }
+    });
   }
 }

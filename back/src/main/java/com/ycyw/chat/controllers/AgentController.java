@@ -59,26 +59,4 @@ public class AgentController {
     }
   }
 
-  @GetMapping("/tickets")
-  public ResponseEntity<List<TicketDetailResponseDto>> getAllTickets() {
-    List<TicketDetailResponseDto> tickets = ticketService.getAllTicketsWithMessages().stream()
-        .map(ticket -> {
-          List<MessageDto> messageDtos = ticket.getMessages().stream()
-              .map(m -> new MessageDto(
-                  m.getAgent() == null ? "CLIENT" : "AGENT",
-                  m.getMessage(),
-                  m.getCreatedAt().toString()))
-              .toList();
-          
-          return new TicketDetailResponseDto(
-              ticket.getId().toString(),
-              ticket.getStatus(),
-              ticket.getIssueType(),
-              messageDtos,
-              ticket.getCreatedAt().toString()
-          );
-        })
-        .toList();
-    return ResponseEntity.ok(tickets);
-  }
 }

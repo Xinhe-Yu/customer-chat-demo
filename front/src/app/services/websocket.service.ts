@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 
 export interface ChatMessage {
   senderType: 'CLIENT' | 'AGENT' | 'SYSTEM';
+  senderName?: string;
   content: string;
   createdAt?: string;
 }
@@ -95,6 +96,31 @@ export class WebsocketService {
             const ticketUpdate = JSON.parse(message.body);
             observer.next(ticketUpdate);
           } catch (error) {
+            observer.error('Failed to parse message: ' + error);
+          }
+        }
+      );
+
+      return () => subscription.unsubscribe();
+    });
+  }
+
+  subscribeToTicketStatusUpdates(): Observable<any> {
+    return new Observable(observer => {
+      if (!this.stompClient || !this.stompClient.connected) {
+        observer.error('WebSocket not connected');
+        return;
+      }
+
+      const subscription = this.stompClient.subscribe(
+        '/topic/agent/ticket-status-updates',
+        (message: IMessage) => {
+          try {
+            const statusUpdate = JSON.parse(message.body);
+            console.log('WebSocket received ticket status update:', statusUpdate);
+            observer.next(statusUpdate);
+          } catch (error) {
+            console.error('Failed to parse WebSocket message:', error);
             observer.error('Failed to parse message: ' + error);
           }
         }

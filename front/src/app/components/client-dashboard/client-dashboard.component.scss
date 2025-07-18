@@ -207,9 +207,15 @@
   }
 }
 
-.ticket-status {
-  margin-bottom: 1rem;
+.ticket-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 1rem;
+}
 
+.ticket-status {
   mat-chip {
     font-size: 0.8rem;
     font-weight: 500;

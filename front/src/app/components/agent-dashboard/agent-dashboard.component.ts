@@ -9,14 +9,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
 import { WebsocketService } from '../../services/websocket.service';
 import { AuthService } from '../../services/auth.service';
-import { TicketService } from '../../services/ticket.service';
+import { TicketService, Ticket } from '../../services/ticket.service';
 import { Subscription } from 'rxjs';
 
 interface TicketInfo {
   ticketId: string;
   issueType: string;
   status: string;
-  clientId: string;
+  clientName: string;
   createdAt: string;
 }
 
@@ -35,8 +35,10 @@ interface TicketInfo {
   styleUrl: './agent-dashboard.component.scss'
 })
 export class AgentDashboardComponent implements OnInit, OnDestroy {
-  tickets: TicketInfo[] = [];
+  tickets: Ticket[] = [];
+  assignedTickets: Ticket[] = [];
   private subscriptions: Subscription[] = [];
+  private currentUserId: string | null = null;
 
   constructor(
     private websocketService: WebsocketService,
@@ -46,7 +48,14 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+    // Subscribe to current user to get the user ID
+    const userSub = this.authService.currentUser$.subscribe(user => {
+      this.currentUserId = user?.id || null;
+    });
+    this.subscriptions.push(userSub);
+    
     this.loadTickets();
+    this.loadAssignedTickets();
     this.connectWebSocket();
   }
 
@@ -56,18 +65,25 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
   }
 
   private loadTickets(): void {
+    // Load only unassigned tickets (available for agents to claim)
     this.ticketService.getAllTickets().subscribe({
       next: (tickets) => {
-        this.tickets = tickets.map(ticket => ({
-          ticketId: ticket.ticketId,
-          issueType: ticket.issueType,
-          status: ticket.status,
-          clientId: 'client', // You can enhance this later
-          createdAt: ticket.createdAt
-        }));
+        this.tickets = tickets;
       },
       error: (error) => {
-        console.error('Error loading tickets:', error);
+        console.error('Error loading available tickets:', error);
+      }
+    });
+  }
+
+  private loadAssignedTickets(): void {
+    // Load tickets assigned to the current agent
+    this.ticketService.getMyTickets().subscribe({
+      next: (tickets) => {
+        this.assignedTickets = tickets;
+      },
+      error: (error) => {
+        console.error('Error loading assigned tickets:', error);
       }
     });
   }
@@ -84,14 +100,69 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
             ticketId: ticketUpdate.ticketId,
             issueType: ticketUpdate.issueType,
             status: 'open',
-            clientId: ticketUpdate.clientUsername || 'client',
+            clientName: ticketUpdate.clientUsername || 'Unknown Client',
+            agentName: undefined,
+            messages: [],
             createdAt: new Date().toISOString()
           });
         },
         error: (error) => console.error('Agent tickets subscription error:', error)
       });
 
-      this.subscriptions.push(agentTicketsSub);
+      const ticketStatusSub = this.websocketService.subscribeToTicketStatusUpdates().subscribe({
+        next: (statusUpdate) => {
+          console.log('Ticket status update received:', statusUpdate);
+          console.log('Current user ID:', this.currentUserId);
+          
+          // Convert ticket ID to string for comparison
+          const ticketIdStr = statusUpdate.ticketId.toString();
+          
+          // Get current user info to check if this agent is the one being assigned
+          const isCurrentAgent = this.currentUserId && statusUpdate.agentId && 
+                                this.currentUserId === statusUpdate.agentId.toString();
+          
+          console.log('Is current agent:', isCurrentAgent, 'Agent ID from update:', statusUpdate.agentId);
+          
+          // Update the ticket status or remove it if assigned to another agent
+          const ticketIndex = this.tickets.findIndex(t => t.ticketId === ticketIdStr);
+          if (ticketIndex !== -1) {
+            if (statusUpdate.status === 'in_progress') {
+              const ticket = this.tickets[ticketIndex];
+              // Remove ticket from available list as it's now assigned
+              this.tickets.splice(ticketIndex, 1);
+              console.log('Removed ticket from available list:', ticketIdStr);
+              
+              // If this agent is the one who got assigned, add it to assigned tickets
+              if (isCurrentAgent) {
+                ticket.status = statusUpdate.status;
+                this.assignedTickets.push(ticket);
+                console.log('Added ticket to current agent assigned list:', ticketIdStr);
+              }
+            } else {
+              // Update ticket status
+              this.tickets[ticketIndex].status = statusUpdate.status;
+              console.log('Updated ticket status in available list:', ticketIdStr, statusUpdate.status);
+            }
+          }
+
+          // Handle assigned tickets updates
+          const assignedTicketIndex = this.assignedTickets.findIndex(t => t.ticketId === ticketIdStr);
+          if (assignedTicketIndex !== -1) {
+            if (statusUpdate.status === 'resolved' || statusUpdate.status === 'closed') {
+              // Remove resolved/closed tickets from assigned list
+              this.assignedTickets.splice(assignedTicketIndex, 1);
+              console.log('Removed resolved ticket from assigned list:', ticketIdStr);
+            } else {
+              // Update status for other status changes
+              this.assignedTickets[assignedTicketIndex].status = statusUpdate.status;
+              console.log('Updated assigned ticket status:', ticketIdStr, statusUpdate.status);
+            }
+          }
+        },
+        error: (error) => console.error('Ticket status subscription error:', error)
+      });
+
+      this.subscriptions.push(agentTicketsSub, ticketStatusSub);
     } catch (error) {
       console.error('WebSocket connection failed:', error);
     }
@@ -107,9 +178,10 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
   }
 
   getStatusColor(status: string): string {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'open': return 'primary';
-      case 'in-progress': return 'accent';
+      case 'in_progress': return 'accent';
+      case 'resolved': return 'warn';
       case 'closed': return 'warn';
       default: return 'primary';
     }

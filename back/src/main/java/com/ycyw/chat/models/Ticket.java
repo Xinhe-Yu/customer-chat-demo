@@ -31,12 +31,17 @@ public class Ticket {
   @JoinColumn(name = "client_id")
   private Client client;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "agent_id")
+  private Agent assignedAgent;
+
   @Size(max = 100)
   @Column(name = "issue_type")
   private String issueType;
 
-  @Size(max = 50)
-  private String status;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "status")
+  private TicketStatus status;
 
   @CreationTimestamp
   @Column(name = "created_at", updatable = false)

@@ -9,55 +9,112 @@
   </mat-toolbar>
 
   <div class="content">
-    <div class="header">
-      <h2>Open Support Tickets</h2>
-      <mat-chip [matBadge]="tickets.length" matBadgeColor="accent">
-        Total Tickets
-      </mat-chip>
+    <!-- My Assigned Tickets Section -->
+    <div class="section">
+      <div class="header">
+        <h2>My Assigned Tickets</h2>
+        <mat-chip [matBadge]="assignedTickets.length" matBadgeColor="accent">
+          Assigned to Me
+        </mat-chip>
+      </div>
+
+      <div class="tickets-grid">
+        <mat-card *ngFor="let ticket of assignedTickets" class="ticket-card assigned-ticket">
+          <mat-card-header>
+            <div mat-card-avatar class="ticket-avatar assigned">
+              <mat-icon>person</mat-icon>
+            </div>
+            <mat-card-title>{{ ticket.issueType | titlecase }}</mat-card-title>
+            <mat-card-subtitle>{{ ticket.clientName }}</mat-card-subtitle>
+          </mat-card-header>
+          
+          <mat-card-content>
+            <div class="ticket-info">
+              <div class="info-row">
+                <span class="label">Ticket ID:</span>
+                <span class="value">{{ ticket.ticketId | slice:0:8 }}...</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Created:</span>
+                <span class="value">{{ formatDate(ticket.createdAt) }}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Status:</span>
+                <mat-chip [color]="getStatusColor(ticket.status)">
+                  {{ ticket.status | titlecase }}
+                </mat-chip>
+              </div>
+            </div>
+          </mat-card-content>
+          
+          <mat-card-actions>
+            <button mat-raised-button color="accent" (click)="joinTicket(ticket.ticketId)">
+              <mat-icon>chat</mat-icon>
+              Continue Chat
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+
+      <div *ngIf="assignedTickets.length === 0" class="no-tickets">
+        <mat-icon>assignment</mat-icon>
+        <h3>No assigned tickets</h3>
+        <p>You don't have any tickets assigned to you yet.</p>
+      </div>
     </div>
 
-    <div class="tickets-grid">
-      <mat-card *ngFor="let ticket of tickets" class="ticket-card">
-        <mat-card-header>
-          <div mat-card-avatar class="ticket-avatar">
-            <mat-icon>support_agent</mat-icon>
-          </div>
-          <mat-card-title>{{ ticket.issueType | titlecase }}</mat-card-title>
-          <mat-card-subtitle>{{ ticket.clientId }}</mat-card-subtitle>
-        </mat-card-header>
-        
-        <mat-card-content>
-          <div class="ticket-info">
-            <div class="info-row">
-              <span class="label">Ticket ID:</span>
-              <span class="value">{{ ticket.ticketId | slice:0:8 }}...</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Created:</span>
-              <span class="value">{{ formatDate(ticket.createdAt) }}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Status:</span>
-              <mat-chip [color]="getStatusColor(ticket.status)">
-                {{ ticket.status | titlecase }}
-              </mat-chip>
-            </div>
-          </div>
-        </mat-card-content>
-        
-        <mat-card-actions>
-          <button mat-raised-button color="primary" (click)="joinTicket(ticket.ticketId)">
-            <mat-icon>chat</mat-icon>
-            Join Chat
-          </button>
-        </mat-card-actions>
-      </mat-card>
-    </div>
+    <!-- Available Tickets Section -->
+    <div class="section">
+      <div class="header">
+        <h2>Available Support Tickets</h2>
+        <mat-chip [matBadge]="tickets.length" matBadgeColor="warn">
+          Available
+        </mat-chip>
+      </div>
 
-    <div *ngIf="tickets.length === 0" class="no-tickets">
-      <mat-icon>inbox</mat-icon>
-      <h3>No open tickets</h3>
-      <p>All tickets have been resolved!</p>
+      <div class="tickets-grid">
+        <mat-card *ngFor="let ticket of tickets" class="ticket-card">
+          <mat-card-header>
+            <div mat-card-avatar class="ticket-avatar">
+              <mat-icon>support_agent</mat-icon>
+            </div>
+            <mat-card-title>{{ ticket.issueType | titlecase }}</mat-card-title>
+            <mat-card-subtitle>{{ ticket.clientName }}</mat-card-subtitle>
+          </mat-card-header>
+          
+          <mat-card-content>
+            <div class="ticket-info">
+              <div class="info-row">
+                <span class="label">Ticket ID:</span>
+                <span class="value">{{ ticket.ticketId | slice:0:8 }}...</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Created:</span>
+                <span class="value">{{ formatDate(ticket.createdAt) }}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Status:</span>
+                <mat-chip [color]="getStatusColor(ticket.status)">
+                  {{ ticket.status | titlecase }}
+                </mat-chip>
+              </div>
+            </div>
+          </mat-card-content>
+          
+          <mat-card-actions>
+            <button mat-raised-button color="primary" (click)="joinTicket(ticket.ticketId)">
+              <mat-icon>chat</mat-icon>
+              Join Chat
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+
+      <div *ngIf="tickets.length === 0" class="no-tickets">
+        <mat-icon>inbox</mat-icon>
+        <h3>No available tickets</h3>
+        <p>All tickets are currently being handled!</p>
+      </div>
     </div>
   </div>
 </div>

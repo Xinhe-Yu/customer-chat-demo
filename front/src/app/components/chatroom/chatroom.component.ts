@@ -10,6 +10,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { WebsocketService, ChatMessage } from '../../services/websocket.service';
 import { TicketService } from '../../services/ticket.service';
 import { AuthService, User } from '../../services/auth.service';
@@ -27,7 +28,8 @@ import { Subscription } from 'rxjs';
     MatFormFieldModule,
     MatInputModule,
     MatBadgeModule,
-    MatChipsModule
+    MatChipsModule,
+    MatSnackBarModule
   ],
   templateUrl: './chatroom.component.html',
   styleUrl: './chatroom.component.scss'
@@ -43,6 +45,7 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
   private subscriptions: Subscription[] = [];
   private shouldScrollToBottom = false;
   private welcomeMessageAdded = false;
+  private ticketStatus: string = 'open';
 
   constructor(
     private route: ActivatedRoute,
@@ -50,7 +53,8 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
     private fb: FormBuilder,
     private websocketService: WebsocketService,
     private ticketService: TicketService,
-    private authService: AuthService
+    private authService: AuthService,
+    private snackBar: MatSnackBar
   ) {
     this.messageForm = this.fb.group({
       message: ['', [Validators.required, Validators.minLength(1)]]
@@ -71,7 +75,12 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
       this.currentUser = user;
       // Load ticket history after user is loaded
       if (user) {
-        this.loadTicketHistory();
+        // If user is an agent, try to join the ticket first
+        if (user.role === 'AGENT') {
+          this.joinTicketAsAgent();
+        } else {
+          this.loadTicketHistory();
+        }
       }
     });
 
@@ -97,9 +106,12 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
       next: (ticket) => {
         this.messages = ticket.messages.map(msg => ({
           senderType: msg.senderType,
+          senderName: msg.senderName,
           content: msg.content,
           createdAt: msg.createdAt
         }));
+
+        this.ticketStatus = ticket.status; // Store ticket status
 
         console.log('Loaded messages:', this.messages.length); // Debug log
 
@@ -114,6 +126,36 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
         console.error('Failed to load ticket history:', error);
         this.messages = [];
         this.addWelcomeMessage();
+      }
+    });
+  }
+
+  private joinTicketAsAgent(): void {
+    console.log('Agent joining ticket:', this.ticketId); // Debug log
+
+    this.ticketService.joinTicket(this.ticketId).subscribe({
+      next: (ticket) => {
+        console.log('Successfully joined ticket:', ticket);
+        this.messages = ticket.messages.map(msg => ({
+          senderType: msg.senderType,
+          senderName: msg.senderName,
+          content: msg.content,
+          createdAt: msg.createdAt
+        }));
+
+        this.ticketStatus = ticket.status; // Store ticket status
+
+        // Add welcome message if no messages exist
+        if (this.messages.length === 0) {
+          this.addWelcomeMessage();
+        }
+
+        this.shouldScrollToBottom = true;
+      },
+      error: (error) => {
+        console.error('Failed to join ticket:', error);
+        // If join fails (e.g., ticket already assigned), just load history
+        this.loadTicketHistory();
       }
     });
   }
@@ -188,9 +230,10 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
     return new Date(timestamp).toLocaleTimeString();
   }
 
-  getSenderDisplayName(senderType: string): string {
-    if (senderType === 'SYSTEM') return 'Your Car Your Way Support Team';
-    return senderType === 'CLIENT' ? 'Customer' : 'Support Agent';
+  getSenderDisplayName(message: ChatMessage): string {
+    if (message.senderType === 'SYSTEM') return 'Your Car Your Way Support Team';
+    // Use the actual sender name if available, otherwise fall back to generic names
+    return message.senderName || (message.senderType === 'CLIENT' ? 'Customer' : 'Support Agent');
   }
 
   private addWelcomeMessage(): void {
@@ -248,5 +291,41 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   canSendMessage(): boolean {
     return this.messageForm.valid && this.isConnected && !!this.currentUser;
+  }
+
+  canResolveTicket(): boolean {
+    return this.ticketStatus !== 'resolved' && this.ticketStatus !== 'closed';
+  }
+
+  resolveTicket(): void {
+    if (!this.canResolveTicket()) return;
+
+    this.ticketService.resolveTicket(this.ticketId).subscribe({
+      next: (resolvedTicket) => {
+        console.log('Ticket resolved:', resolvedTicket);
+        this.ticketStatus = resolvedTicket.status;
+        
+        // Add a system message to indicate the ticket was resolved
+        this.messages.push({
+          senderType: 'SYSTEM',
+          content: 'This ticket has been marked as resolved by the customer.',
+          createdAt: new Date().toISOString()
+        });
+        this.shouldScrollToBottom = true;
+        
+        // Show success message
+        this.snackBar.open('Ticket marked as resolved!', 'Close', {
+          duration: 3000,
+          panelClass: ['success-snackbar']
+        });
+      },
+      error: (error) => {
+        console.error('Error resolving ticket:', error);
+        this.snackBar.open('Failed to resolve ticket. Please try again.', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
+      }
+    });
   }
 }
