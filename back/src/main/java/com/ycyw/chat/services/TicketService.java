@@ -8,7 +8,6 @@ import com.ycyw.chat.models.TicketStatus;
 import com.ycyw.chat.repositories.AgentRepository;
 import com.ycyw.chat.repositories.ClientRepository;
 import com.ycyw.chat.repositories.TicketRepository;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,13 +18,13 @@ public class TicketService {
   private final TicketRepository ticketRepo;
   private final ClientRepository clientRepo;
   private final AgentRepository agentRepo;
-  private final SimpMessagingTemplate messagingTemplate;
+  private final NotifierService notifierService;
 
-  public TicketService(TicketRepository ticketRepo, ClientRepository clientRepo, AgentRepository agentRepo, SimpMessagingTemplate messagingTemplate) {
+  public TicketService(TicketRepository ticketRepo, ClientRepository clientRepo, AgentRepository agentRepo, NotifierService notifierService) {
     this.ticketRepo = ticketRepo;
     this.clientRepo = clientRepo;
     this.agentRepo = agentRepo;
-    this.messagingTemplate = messagingTemplate;
+    this.notifierService = notifierService;
   }
 
   public Ticket createTicket(UUID clientId, String issueType) {
@@ -92,7 +91,7 @@ public class TicketService {
         agentId, 
         agent.getName()
     );
-    messagingTemplate.convertAndSend("/topic/agent/ticket-status-updates", statusUpdate);
+    notifierService.notifyTicketStatusUpdate(statusUpdate);
     
     return savedTicket;
   }
@@ -123,7 +122,7 @@ public class TicketService {
         ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getId() : null,
         ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getName() : null
     );
-    messagingTemplate.convertAndSend("/topic/agent/ticket-status-updates", statusUpdate);
+    notifierService.notifyTicketStatusUpdate(statusUpdate);
     
     return savedTicket;
   }
@@ -155,7 +154,7 @@ public class TicketService {
         ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getId() : null,
         ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getName() : null
     );
-    messagingTemplate.convertAndSend("/topic/agent/ticket-status-updates", statusUpdate);
+    notifierService.notifyTicketStatusUpdate(statusUpdate);
     
     return savedTicket;
   }
