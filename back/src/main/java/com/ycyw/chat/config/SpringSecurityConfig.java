@@ -58,6 +58,7 @@ public class SpringSecurityConfig {
             .requestMatchers("/ws/**").permitAll()
             .requestMatchers("/api/auth/login", "/api/auth/me", "/api/agent/auth").permitAll()
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+            .requestMatchers("/actuator/**").permitAll()
             .anyRequest().authenticated())
         .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
         .build();
@@ -82,11 +83,13 @@ public class SpringSecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.addAllowedOrigin("http://localhost:4200");
+    configuration.addAllowedOrigin("http://localhost:4200"); // Angular dev server
+    configuration.addAllowedOrigin("http://localhost:80"); // Docker frontend
+    configuration.addAllowedOrigin("http://localhost"); // Docker frontend (no port)
     configuration.addAllowedMethod("*");
     configuration.addAllowedHeader("*");
     configuration.setAllowCredentials(true);
-    
+
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);
     return source;
@@ -98,10 +101,10 @@ public class SpringSecurityConfig {
       BCryptPasswordEncoder passwordEncoder) {
     DaoAuthenticationProvider clientProvider = new DaoAuthenticationProvider(clientDetailsService);
     clientProvider.setPasswordEncoder(passwordEncoder);
-    
+
     DaoAuthenticationProvider agentProvider = new DaoAuthenticationProvider(agentDetailsService);
     agentProvider.setPasswordEncoder(passwordEncoder);
-    
+
     return new ProviderManager(List.of(clientProvider, agentProvider));
   }
 }
