@@ -2,6 +2,9 @@ package com.ycyw.chat;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+// import org.springframework.boot.CommandLineRunner;
+// import org.springframework.context.annotation.Bean;
+// import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
@@ -18,7 +21,7 @@ public class ChatApplication {
   // @Bean
   // CommandLineRunner runner(BCryptPasswordEncoder encoder) {
   // return args -> {
-  // System.out.println("Encoded password: " + encoder.encode("12345678"));
+  // System.out.println("Encoded password: " + encoder.encode("87654321"));
   // };
   // }
 }

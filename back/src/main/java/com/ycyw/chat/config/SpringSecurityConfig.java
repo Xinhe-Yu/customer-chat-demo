@@ -20,8 +20,12 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import com.ycyw.chat.services.AgentDetailsService;
 import com.ycyw.chat.services.ClientDetailsService;
 
 import io.github.cdimascio.dotenv.Dotenv;
@@ -34,6 +38,9 @@ public class SpringSecurityConfig {
   public SpringSecurityConfig() {
     Dotenv dotenv = Dotenv.load();
     this.jwtKey = dotenv.get("JWT_KEY");
+    if (this.jwtKey == null || this.jwtKey.trim().isEmpty()) {
+      throw new IllegalStateException("JWT_KEY environment variable is not set or is empty");
+    }
   }
 
   @Bean
@@ -45,11 +52,13 @@ public class SpringSecurityConfig {
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     return http
         .csrf(csrf -> csrf.disable())
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/ws/**").permitAll()
-            .requestMatchers("/api/auth/login", "/api/auth/me").permitAll()
+            .requestMatchers("/api/auth/login", "/api/auth/me", "/api/agent/auth").permitAll()
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+            .requestMatchers("/actuator/**").permitAll()
             .anyRequest().authenticated())
         .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
         .build();
@@ -72,10 +81,30 @@ public class SpringSecurityConfig {
   }
 
   @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.addAllowedOrigin("http://localhost:4200"); // Angular dev server
+    configuration.addAllowedOrigin("http://localhost:80"); // Docker frontend
+    configuration.addAllowedOrigin("http://localhost"); // Docker frontend (no port)
+    configuration.addAllowedMethod("*");
+    configuration.addAllowedHeader("*");
+    configuration.setAllowCredentials(true);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
+  }
+
+  @Bean
   public AuthenticationManager authenticationManager(ClientDetailsService clientDetailsService,
+      AgentDetailsService agentDetailsService,
       BCryptPasswordEncoder passwordEncoder) {
-    DaoAuthenticationProvider daoProvider = new DaoAuthenticationProvider(clientDetailsService);
-    daoProvider.setPasswordEncoder(passwordEncoder);
-    return new ProviderManager(List.of(daoProvider));
+    DaoAuthenticationProvider clientProvider = new DaoAuthenticationProvider(clientDetailsService);
+    clientProvider.setPasswordEncoder(passwordEncoder);
+
+    DaoAuthenticationProvider agentProvider = new DaoAuthenticationProvider(agentDetailsService);
+    agentProvider.setPasswordEncoder(passwordEncoder);
+
+    return new ProviderManager(List.of(clientProvider, agentProvider));
   }
 }

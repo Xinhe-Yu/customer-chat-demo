@@ -1,57 +1,189 @@
-# customer-chat-demo
- proof-of-concept real-time customer support chat application built with Angular 18 (frontend) and Spring Boot 3 (backend) using WebSocket (STOMP protocol).
+# Customer Chat Demo
 
-## 1. Installation Guide
+A proof-of-concept real-time customer support chat application built with Angular 18 (frontend) and Spring Boot 3 (backend) using WebSocket (STOMP protocol). This system is designed as a customer support module for a car rental platform.
 
-Clone the repository by:
+## Features
 
-`git clone https://github.com/Xinhe-Yu/customer-chat-demo`
+- **Real-time chat** using WebSocket (STOMP protocol)
+- **JWT authentication** for clients and agents
+- **Ticket management system** with status tracking
+- **Role-based access control** (clients vs agents)
+- **PostgreSQL database** with full car rental schema
+- **Docker containerization** for easy deployment
+- **Complete database schema** including agencies, agents, clients, offers, reservations, and support tickets
 
-or
+## Quick Start with Docker (Recommended)
 
-`gh repo clone Xinhe-Yu/customer-chat-demo`
+### Prerequisites
+- Docker
+- Docker Compose
 
-### Back-end
-Ensure that you have :
+### Running the Application
 
-- Java 17 (check it with `java -version`)
-- Apache Maven 3.x.x (check it with `mvn -v`)
-- PostgreSQL (version 16 or higher is recommended, please also check if it is running and accessible, `sudo systemctl status postgresql` for Linux, `brew services list | grep postgresql` for macOS brew.)
+**Build and start all services:**
+```bash
+docker compose up -d --build
+```
 
-Get into the back-end folder by:
+**Alternative (if you encounter BuildKit issues in WSL):**
+```bash
+DOCKER_BUILDKIT=0 docker compose up -d --build
+```
 
-`cd back`
+**Stop all services:**
+```bash
+docker compose down
+```
 
-1. Install Dependencies with Maven
+**View logs:**
+```bash
+docker compose logs -f [optional: a particular service-name]
+```
 
-`mvn clean install -DskipTests`
+**Check service status:**
+```bash
+docker compose ps
+```
 
-2. Configure environment variables
+### Access the Application
 
-Locate the `env_template` file. Make a copy in the same folder and rename it `.env`. Add your PostgreSQL root's username and password, and a Encryption Key for encrypting and decrypting the JWT.
+After running `docker compose up -d --build`, wait 1-2 minutes for all services to be ready, then access:
 
-3. Initialize the Database Schema With PostgreSQL installed and running, load the initial database schema:
+- **Frontend (Angular)**: http://localhost (port 80)
+- **Backend API**: http://localhost:8080
+- **Database**: localhost:5432
+- **API Documentation**: http://localhost:8080/swagger-ui/index.html
 
-`sudo -u postgres psql`
+### Default Users
 
-Then inside the prompt:
+The application comes with pre-seeded users:
 
-`CREATE DATABASE ycyw;`
-`\q`
+**Client:**
+- Email: `client@gmail.com`
+- Username: `bob`
+- Password: `password`
 
-Now execute the SQL file:
-`sudo -u postgres psql -d ycyw -f src/main/static/templates/schema.sql`
+**Agents:**
+- **Marie** (Customer Service Agent)
+  - id: `00000000-0000-0000-0000-000000000000`
+  - Secret: `12345678`
+- **Guillaume** (Customer Service Agent)
+  - id: `88888888-8888-8888-8888-888888888888`
+  - Secret: `87654321`
 
-4. (Optional) If you want to populate your database with initial data, you can use the seeding feature:
-`sudo -u postgres psql -d ycyw -f src/main/static/templates/seeds.sql`
+## Manual Installation Guide
 
-You can set your own password by uncomment `CommandLineRunner` Bean in main method, and get the encoded string from terminal.
+### Prerequisites
 
-5. Run the application:
+- Java 21+ (check with `java -version`)
+- Node.js 18+ (check with `node -v`)
+- npm (check with `npm -v`)
+- Apache Maven 3.x.x (check with `mvn -v`)
+- PostgreSQL 16+ (check with `psql --version`)
 
-`mvn spring-boot:run`
+### Clone the Repository
 
-The application will start on the port 8001 (localhost). should see output in the terminal indicating the application has started successfully.
-After starting the application, you can view the API documentation at:
+```bash
+git clone https://github.com/Xinhe-Yu/customer-chat-demo
+cd customer-chat-demo
+```
 
-API Documentation: http://localhost:8001/api/swagger-ui/index.html
+### Backend Setup
+
+1. **Navigate to backend directory:**
+```bash
+cd back
+```
+
+2. **Install Dependencies:**
+```bash
+mvn clean install -DskipTests
+```
+
+3. **Configure Environment Variables:**
+   - Copy `env_template` to `.env`
+   - Edit `.env` with your PostgreSQL credentials:
+   ```
+   DB_USERNAME=your_postgres_username
+   DB_PASSWORD=your_postgres_password
+   JWT_KEY=your_jwt_secret_key
+   ```
+
+4. **Initialize Database:**
+```bash
+# Create database
+sudo -u postgres psql -c "CREATE DATABASE chat;"
+
+# Apply schema
+sudo -u postgres psql -d chat -f src/main/resources/static/schema.sql
+
+# Apply seed data
+sudo -u postgres psql -d chat -f src/main/resources/static/seeds.sql
+```
+
+5. **Run Backend:**
+```bash
+mvn spring-boot:run
+```
+
+Backend will start on http://localhost:8080
+
+For API documentation, visit: http://localhost:8080/swagger-ui/index.html
+
+
+### Frontend Setup
+
+1. **Navigate to frontend directory:**
+```bash
+cd front
+```
+
+2. **Install Dependencies:**
+```bash
+npm install
+```
+
+3. **Start Development Server:**
+```bash
+ng serve
+```
+
+Frontend will start on http://localhost:4200
+
+## Technology Stack
+
+**Frontend:**
+- Angular 19
+- TypeScript
+- WebSocket (STOMP.js)
+- Angular Material (if used)
+- Nginx (for Docker deployment)
+
+**Backend:**
+- Spring Boot 3
+- Spring Security (JWT)
+- Spring WebSocket
+- JPA/Hibernate
+- PostgreSQL Driver
+- Maven
+
+**Database:**
+- PostgreSQL 16
+- JSONB for flexible data storage
+
+**DevOps:**
+- Docker & Docker Compose
+- Multi-stage builds
+- Health checks
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## License
+
+This project is a proof-of-concept demo for educational purposes.

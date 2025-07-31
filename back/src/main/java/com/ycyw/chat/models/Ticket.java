@@ -27,19 +27,21 @@ public class Ticket {
   @GeneratedValue // relies on DB default gen_random_uuid()
   private UUID id;
 
-  @Column(name = "client_id")
-  private UUID clientId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "client_id")
+  private Client client;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "agent_id")
-  private Client client;
+  private Agent assignedAgent;
 
   @Size(max = 100)
   @Column(name = "issue_type")
   private String issueType;
 
-  @Size(max = 50)
-  private String status;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "status")
+  private TicketStatus status;
 
   @CreationTimestamp
   @Column(name = "created_at", updatable = false)

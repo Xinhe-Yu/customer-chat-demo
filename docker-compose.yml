@@ -1,0 +1,69 @@
+
+services:
+  # PostgreSQL Database
+  database:
+    image: postgres:16
+    container_name: chat-database
+    environment:
+      POSTGRES_DB: chat
+      POSTGRES_USER: chat_user
+      POSTGRES_PASSWORD: chat_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./back/src/main/resources/static/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./back/src/main/resources/static/seeds.sql:/docker-entrypoint-initdb.d/02-seeds.sql
+    ports:
+      - "5433:5432"
+    networks:
+      - chat-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chat_user -d chat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Backend
+  backend:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: chat-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/chat
+      SPRING_DATASOURCE_USERNAME: chat_user
+      SPRING_DATASOURCE_PASSWORD: chat_password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      JWT_KEY: a-string-secret-at-least-256-bits-long
+    ports:
+      - "8080:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - chat-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Angular Frontend
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: chat-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - chat-network
+
+volumes:
+  postgres_data:
+
+networks:
+  chat-network:
+    driver: bridge

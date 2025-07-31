@@ -11,7 +11,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
@@ -31,14 +30,27 @@ import lombok.experimental.Accessors;
 @ToString
 public class Agent {
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @GeneratedValue // relies on DB default gen_random_uuid()
   private UUID id;
 
   @NonNull
   @Size(max = 255)
   private String secret;
 
+  @Column(name = "agency_id")
+  private UUID agencyId;
+
+  @Size(max = 50)
+  private String role;
+
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "agent_data", columnDefinition = "jsonb")
   private Map<String, Object> agentData;
+
+  public String getName() {
+    if (agentData != null && agentData.containsKey("name")) {
+      return (String) agentData.get("name");
+    }
+    return "Unknown Agent";
+  }
 }

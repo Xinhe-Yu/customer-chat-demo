@@ -6,6 +6,7 @@ CREATE TABLE clients (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
+    username VARCHAR(100) NOT NULL,
     client_data JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -28,7 +29,7 @@ CREATE TABLE agents (
     agent_data JSONB
 );
 
--- Table: offers (formerly reservations)
+-- Table: offers
 CREATE TABLE offers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     agency_id UUID NOT NULL REFERENCES agencies(id) ON DELETE CASCADE,
@@ -45,7 +46,7 @@ CREATE TABLE offers (
 CREATE TABLE reservations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     offer_id UUID UNIQUE NOT NULL REFERENCES offers(id),
-    client_id UUID REFERENCES clients(id),
+    client_id UUID NOT NULL REFERENCES clients(id),
     status VARCHAR(50),
     payment_data JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -55,18 +56,25 @@ CREATE TABLE reservations (
 -- Table: support_tickets
 CREATE TABLE support_tickets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    client_id UUID REFERENCES clients(id),
+    client_id UUID NOT NULL REFERENCES clients(id),
+    agent_id UUID REFERENCES agents(id), -- nullable if no agent is assigned yet
     issue_type VARCHAR(100),
     status VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE support_tickets ADD CONSTRAINT fk_support_tickets_agent_id
+    FOREIGN KEY (agent_id) REFERENCES agents(id);
+
+-- Add index for performance
+CREATE INDEX idx_support_tickets_agent_id ON support_tickets(agent_id);
+
 -- Table: messages
 CREATE TABLE messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     ticket_id UUID NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE,
-    agent_id UUID REFERENCES agents(id),
+    agent_id UUID REFERENCES agents(id), -- nullable if message is from client
     message TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

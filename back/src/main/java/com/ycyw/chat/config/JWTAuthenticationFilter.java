@@ -35,7 +35,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
       throws ServletException, IOException {
 
     String path = request.getRequestURI();
-    if (path.equals("/api/auth/login") || path.equals("/api/auth/register")) {
+    if (path.equals("/api/auth/login") || path.equals("/api/agent/auth")) {
       filterChain.doFilter(request, response);
       return;
     }

@@ -20,7 +20,7 @@ import lombok.experimental.Accessors;
 @EntityListeners(AuditingEntityListener.class)
 public class Message {
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @GeneratedValue // relies on DB default gen_random_uuid()
   private UUID id;
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -31,7 +31,7 @@ public class Message {
   @JoinColumn(name = "agent_id")
   private Agent agent;
 
-  @Lob
+  @Column(columnDefinition = "TEXT")
   private String message;
 
   @CreationTimestamp
