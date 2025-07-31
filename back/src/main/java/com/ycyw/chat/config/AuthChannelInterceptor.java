@@ -14,13 +14,16 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import com.ycyw.chat.services.JWTService;
+import com.ycyw.chat.services.TicketService;
 
 @Component
 public class AuthChannelInterceptor implements ChannelInterceptor {
   private final JWTService jwtService;
+  private final TicketService ticketService;
 
-  public AuthChannelInterceptor(JWTService jwtService) {
+  public AuthChannelInterceptor(JWTService jwtService, TicketService ticketService) {
     this.jwtService = jwtService;
+    this.ticketService = ticketService;
   }
 
   @Override
@@ -29,6 +32,7 @@ public class AuthChannelInterceptor implements ChannelInterceptor {
     if (accessor == null) {
       throw new IllegalArgumentException("Message is not a STOMP message");
     }
+    
     if (StompCommand.CONNECT.equals(accessor.getCommand())) {
       String token = accessor.getFirstNativeHeader("Authorization");
       if (token != null && token.startsWith("Bearer ")) {
@@ -48,8 +52,41 @@ public class AuthChannelInterceptor implements ChannelInterceptor {
       } else {
         throw new IllegalArgumentException("Missing JWT");
       }
+    } else if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+      UsernamePasswordAuthenticationToken auth = (UsernamePasswordAuthenticationToken) accessor.getUser();
+      if (auth == null) {
+        throw new IllegalArgumentException("User not authenticated");
+      }
+      
+      String destination = accessor.getDestination();
+      if (!isAuthorizedToSubscribe(auth, destination)) {
+        throw new IllegalArgumentException("Not authorized to subscribe to this topic");
+      }
     }
     return message;
+  }
+
+  private boolean isAuthorizedToSubscribe(UsernamePasswordAuthenticationToken auth, String destination) {
+    String role = auth.getAuthorities().iterator().next().getAuthority();
+    String userId = (String) auth.getPrincipal();
+
+    if ("AGENT".equals(role)) {
+      return true;
+    }
+
+    if ("CLIENT".equals(role)) {
+      if (destination != null && destination.startsWith("/topic/tickets/")) {
+        String ticketId = destination.substring("/topic/tickets/".length());
+        return isClientAuthorizedForTicket(userId, ticketId);
+      }
+      return false;
+    }
+
+    return false;
+  }
+
+  private boolean isClientAuthorizedForTicket(String userId, String ticketId) {
+    return ticketService.isUserAuthorizedForTicket(userId, ticketId);
   }
 
 }

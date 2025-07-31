@@ -159,4 +159,14 @@ public class TicketService {
     
     return savedTicket;
   }
+
+  public boolean isUserAuthorizedForTicket(String userEmail, String ticketId) {
+    try {
+      UUID ticketUuid = UUID.fromString(ticketId);
+      Ticket ticket = ticketRepo.findByIdWithClient(ticketUuid).orElse(null);
+      return ticket != null && ticket.getClient().getEmail().equals(userEmail);
+    } catch (Exception e) {
+      return false;
+    }
+  }
 }
