@@ -1,0 +1,7 @@
+target/
+!target/chat-0.0.1-SNAPSHOT.jar
+.git
+.gitignore
+README.md
+Dockerfile
+docker-compose.yml
