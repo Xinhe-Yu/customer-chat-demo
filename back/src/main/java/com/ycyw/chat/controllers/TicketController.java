@@ -43,6 +43,61 @@ public class TicketController {
     return ResponseEntity.ok(response);
   }
 
+  @GetMapping
+  public ResponseEntity<List<TicketDetailResponseDto>> getMyTickets(
+      @AuthenticationPrincipal Object principal) {
+
+    List<TicketDetailResponseDto> tickets;
+
+    if (principal instanceof ClientDetails clientDetails) {
+      tickets = ticketService.getClientTicketsWithMessages(clientDetails.getId()).stream()
+          .map(ticket -> {
+            List<MessageDto> messageDtos = ticket.getMessages().stream()
+                .map(m -> new MessageDto(
+                    m.getAgent() == null ? "CLIENT" : "AGENT",
+                    m.getAgent() == null ? ticket.getClient().getUsername() : m.getAgent().getName(),
+                    m.getMessage(),
+                    m.getCreatedAt().toString()))
+                .toList();
+
+            return new TicketDetailResponseDto(
+                ticket.getId().toString(),
+                ticket.getStatus().getValue(),
+                ticket.getIssueType(),
+                ticket.getClient().getUsername(),
+                ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getName() : null,
+                messageDtos,
+                ticket.getCreatedAt().toString());
+          })
+          .toList();
+    } else if (principal instanceof AgentDetails agentDetails) {
+      tickets = ticketService.getAgentTicketsWithMessages(agentDetails.getId()).stream()
+          .map(ticket -> {
+            List<MessageDto> messageDtos = ticket.getMessages().stream()
+                .map(m -> new MessageDto(
+                    m.getAgent() == null ? "CLIENT" : "AGENT",
+                    m.getAgent() == null ? ticket.getClient().getUsername() : m.getAgent().getName(),
+                    m.getMessage(),
+                    m.getCreatedAt().toString()))
+                .toList();
+
+            return new TicketDetailResponseDto(
+                ticket.getId().toString(),
+                ticket.getStatus().getValue(),
+                ticket.getIssueType(),
+                ticket.getClient().getUsername(),
+                ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getName() : null,
+                messageDtos,
+                ticket.getCreatedAt().toString());
+          })
+          .toList();
+    } else {
+      return ResponseEntity.status(403).build();
+    }
+
+    return ResponseEntity.ok(tickets);
+  }
+
   @GetMapping("/{ticketId}")
   public ResponseEntity<TicketDetailResponseDto> getTicket(@PathVariable UUID ticketId) {
     Ticket ticket = ticketService.getTicket(ticketId);
@@ -76,7 +131,7 @@ public class TicketController {
                   m.getMessage(),
                   m.getCreatedAt().toString()))
               .toList();
-          
+
           return new TicketDetailResponseDto(
               ticket.getId().toString(),
               ticket.getStatus().getValue(),
@@ -84,68 +139,10 @@ public class TicketController {
               ticket.getClient().getUsername(),
               ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getName() : null,
               messageDtos,
-              ticket.getCreatedAt().toString()
-          );
+              ticket.getCreatedAt().toString());
         })
         .toList();
-    
-    return ResponseEntity.ok(tickets);
-  }
 
-  @GetMapping("/my-tickets")
-  public ResponseEntity<List<TicketDetailResponseDto>> getMyTickets(
-      @AuthenticationPrincipal Object principal) {
-    
-    List<TicketDetailResponseDto> tickets;
-    
-    if (principal instanceof ClientDetails clientDetails) {
-      tickets = ticketService.getClientTicketsWithMessages(clientDetails.getId()).stream()
-          .map(ticket -> {
-            List<MessageDto> messageDtos = ticket.getMessages().stream()
-                .map(m -> new MessageDto(
-                    m.getAgent() == null ? "CLIENT" : "AGENT",
-                    m.getAgent() == null ? ticket.getClient().getUsername() : m.getAgent().getName(),
-                    m.getMessage(),
-                    m.getCreatedAt().toString()))
-                .toList();
-            
-            return new TicketDetailResponseDto(
-                ticket.getId().toString(),
-                ticket.getStatus().getValue(),
-                ticket.getIssueType(),
-                ticket.getClient().getUsername(),
-                ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getName() : null,
-                messageDtos,
-                ticket.getCreatedAt().toString()
-            );
-          })
-          .toList();
-    } else if (principal instanceof AgentDetails agentDetails) {
-      tickets = ticketService.getAgentTicketsWithMessages(agentDetails.getId()).stream()
-          .map(ticket -> {
-            List<MessageDto> messageDtos = ticket.getMessages().stream()
-                .map(m -> new MessageDto(
-                    m.getAgent() == null ? "CLIENT" : "AGENT",
-                    m.getAgent() == null ? ticket.getClient().getUsername() : m.getAgent().getName(),
-                    m.getMessage(),
-                    m.getCreatedAt().toString()))
-                .toList();
-            
-            return new TicketDetailResponseDto(
-                ticket.getId().toString(),
-                ticket.getStatus().getValue(),
-                ticket.getIssueType(),
-                ticket.getClient().getUsername(),
-                ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getName() : null,
-                messageDtos,
-                ticket.getCreatedAt().toString()
-            );
-          })
-          .toList();
-    } else {
-      return ResponseEntity.status(403).build();
-    }
-    
     return ResponseEntity.ok(tickets);
   }
 
@@ -154,9 +151,9 @@ public class TicketController {
       @PathVariable UUID ticketId,
       @Valid @RequestBody UpdateTicketStatusRequestDto request,
       @AuthenticationPrincipal Object principal) {
-    
+
     Ticket ticket;
-    
+
     switch (request.getStatus().toUpperCase()) {
       case "IN_PROGRESS":
         // Only agents can set status to IN_PROGRESS (join ticket)
@@ -165,7 +162,7 @@ public class TicketController {
         }
         ticket = ticketService.assignAgentToTicket(ticketId, agentDetails.getId());
         break;
-        
+
       case "RESOLVED":
         // Only clients can set status to RESOLVED
         if (!(principal instanceof ClientDetails clientDetails)) {
@@ -173,7 +170,7 @@ public class TicketController {
         }
         ticket = ticketService.resolveTicket(ticketId, clientDetails.getId());
         break;
-        
+
       case "CLOSED":
         // Both agents and clients can close tickets
         if (principal instanceof ClientDetails clientDetails) {
@@ -184,11 +181,11 @@ public class TicketController {
           return ResponseEntity.status(403).build();
         }
         break;
-        
+
       default:
         return ResponseEntity.badRequest().build();
     }
-    
+
     List<MessageDto> messageDtos = ticket.getMessages().stream()
         .map(m -> new MessageDto(
             m.getAgent() == null ? "CLIENT" : "AGENT",

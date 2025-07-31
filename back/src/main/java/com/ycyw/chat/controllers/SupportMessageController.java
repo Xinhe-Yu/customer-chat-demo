@@ -37,6 +37,7 @@ public class SupportMessageController {
 
     MessageDto outDto = new MessageDto(
         inDto.getSenderType(),
+        saved.getAgent() == null ? saved.getTicket().getClient().getUsername() : saved.getAgent().getName(),
         inDto.getContent(),
         saved.getCreatedAt().toString());
 

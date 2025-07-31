@@ -1,14 +1,11 @@
 package com.ycyw.chat.controllers;
 
-import java.util.List;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,11 +15,8 @@ import com.ycyw.chat.dto.request.LoginDto;
 import com.ycyw.chat.dto.response.ApiResponseDto;
 import com.ycyw.chat.dto.response.ErrorResponseDto;
 import com.ycyw.chat.dto.response.TokenResponseDto;
-import com.ycyw.chat.dto.MessageDto;
-import com.ycyw.chat.dto.response.TicketDetailResponseDto;
 import com.ycyw.chat.services.AgentDetails;
 import com.ycyw.chat.services.JWTService;
-import com.ycyw.chat.services.TicketService;
 
 @RestController
 @RequestMapping("/api/agent")
@@ -30,15 +24,12 @@ public class AgentController {
 
   private final AuthenticationManager authenticationManager;
   private final JWTService jwtService;
-  private final TicketService ticketService;
 
   public AgentController(
       AuthenticationManager authenticationManager,
-      JWTService jwtService,
-      TicketService ticketService) {
+      JWTService jwtService) {
     this.authenticationManager = authenticationManager;
     this.jwtService = jwtService;
-    this.ticketService = ticketService;
   }
 
   @PostMapping("/auth")

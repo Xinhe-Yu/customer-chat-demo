@@ -49,7 +49,7 @@ export class TicketService {
   }
 
   getMyTickets(): Observable<Ticket[]> {
-    return this.http.get<Ticket[]>(`${this.apiUrl}/tickets/my-tickets`);
+    return this.http.get<Ticket[]>(`${this.apiUrl}/tickets`);
   }
 
   updateTicketStatus(ticketId: string, status: string): Observable<Ticket> {
