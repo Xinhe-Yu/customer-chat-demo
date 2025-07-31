@@ -29,7 +29,7 @@ CREATE TABLE agents (
     agent_data JSONB
 );
 
--- Table: offers (formerly reservations)
+-- Table: offers
 CREATE TABLE offers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     agency_id UUID NOT NULL REFERENCES agencies(id) ON DELETE CASCADE,
@@ -46,7 +46,7 @@ CREATE TABLE offers (
 CREATE TABLE reservations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     offer_id UUID UNIQUE NOT NULL REFERENCES offers(id),
-    client_id UUID REFERENCES clients(id),
+    client_id UUID NOT NULL REFERENCES clients(id),
     status VARCHAR(50),
     payment_data JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -56,8 +56,8 @@ CREATE TABLE reservations (
 -- Table: support_tickets
 CREATE TABLE support_tickets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    client_id UUID REFERENCES clients(id),
-    agent_id UUID REFERENCES agents(id),
+    client_id UUID NOT NULL REFERENCES clients(id),
+    agent_id UUID REFERENCES agents(id), -- nullable if no agent is assigned yet
     issue_type VARCHAR(100),
     status VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -74,7 +74,7 @@ CREATE INDEX idx_support_tickets_agent_id ON support_tickets(agent_id);
 CREATE TABLE messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     ticket_id UUID NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE,
-    agent_id UUID REFERENCES agents(id),
+    agent_id UUID REFERENCES agents(id), -- nullable if message is from client
     message TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
