@@ -44,3 +44,8 @@ body {
   background-color: #3d8941;
   /* green */
 }
+
+/* Ensure badge appears above chip border */
+.mat-badge-content {
+  z-index: 10 !important;
+}
