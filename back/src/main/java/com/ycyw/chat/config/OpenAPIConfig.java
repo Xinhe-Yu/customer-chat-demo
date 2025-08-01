@@ -18,9 +18,9 @@ public class OpenAPIConfig {
         .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
         .components(new Components().addSecuritySchemes("Bearer Authentication", createAPIKeyScheme()))
         .info(new Info()
-            .title("MDD API")
+            .title("YCYW POC API")
             .version("1.0")
-            .description("MDD API Documentation"));
+            .description("YCYW POC API Documentation"));
   }
 
   private SecurityScheme createAPIKeyScheme() {

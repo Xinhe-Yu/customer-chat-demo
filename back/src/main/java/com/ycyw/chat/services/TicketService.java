@@ -70,9 +70,19 @@ public class TicketService {
   }
 
   public Ticket assignAgentToTicket(UUID ticketId, UUID agentId) {
-    // Check if ticket exists and is unassigned
-    Ticket ticket = ticketRepo.findUnassignedTicketById(ticketId)
-        .orElseThrow(() -> new RuntimeException("Ticket not found or already assigned"));
+    // Check if ticket exists first
+    Ticket ticket = ticketRepo.findById(ticketId)
+        .orElseThrow(() -> new RuntimeException("Ticket not found"));
+    
+    // If ticket is already assigned, return it as-is
+    if (ticket.getAssignedAgent() != null) {
+      return ticket;
+    }
+    
+    // Only assign if ticket is OPEN (unassigned)
+    if (ticket.getStatus() != TicketStatus.OPEN) {
+      return ticket;
+    }
     
     // Find the agent
     Agent agent = agentRepo.findById(agentId)
@@ -95,6 +105,7 @@ public class TicketService {
     
     return savedTicket;
   }
+
 
   public Ticket resolveTicket(UUID ticketId, UUID clientId) {
     // Find the ticket and verify it belongs to the client
