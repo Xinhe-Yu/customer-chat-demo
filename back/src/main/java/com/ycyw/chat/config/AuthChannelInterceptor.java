@@ -13,17 +13,17 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
+import com.ycyw.chat.services.AuthorizationService;
 import com.ycyw.chat.services.JWTService;
-import com.ycyw.chat.services.TicketService;
 
 @Component
 public class AuthChannelInterceptor implements ChannelInterceptor {
   private final JWTService jwtService;
-  private final TicketService ticketService;
+  private final AuthorizationService authorizationService;
 
-  public AuthChannelInterceptor(JWTService jwtService, TicketService ticketService) {
+  public AuthChannelInterceptor(JWTService jwtService, AuthorizationService authorizationService) {
     this.jwtService = jwtService;
-    this.ticketService = ticketService;
+    this.authorizationService = authorizationService;
   }
 
   @Override
@@ -32,7 +32,7 @@ public class AuthChannelInterceptor implements ChannelInterceptor {
     if (accessor == null) {
       throw new IllegalArgumentException("Message is not a STOMP message");
     }
-    
+
     if (StompCommand.CONNECT.equals(accessor.getCommand())) {
       String token = accessor.getFirstNativeHeader("Authorization");
       if (token != null && token.startsWith("Bearer ")) {
@@ -57,7 +57,7 @@ public class AuthChannelInterceptor implements ChannelInterceptor {
       if (auth == null) {
         throw new IllegalArgumentException("User not authenticated");
       }
-      
+
       String destination = accessor.getDestination();
       if (!isAuthorizedToSubscribe(auth, destination)) {
         throw new IllegalArgumentException("Not authorized to subscribe to this topic");
@@ -86,7 +86,6 @@ public class AuthChannelInterceptor implements ChannelInterceptor {
   }
 
   private boolean isClientAuthorizedForTicket(String userId, String ticketId) {
-    return ticketService.isUserAuthorizedForTicket(userId, ticketId);
+    return authorizationService.isUserAuthorizedForTicket(userId, ticketId);
   }
-
 }
