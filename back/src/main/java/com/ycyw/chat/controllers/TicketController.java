@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ycyw.chat.dto.MessageDto;
 import com.ycyw.chat.dto.request.CreateTicketRequestDto;
 import com.ycyw.chat.dto.request.UpdateTicketStatusRequestDto;
 import com.ycyw.chat.dto.response.TicketDetailResponseDto;
 import com.ycyw.chat.dto.response.TicketResponseDto;
+import com.ycyw.chat.mappers.TicketMapper;
 import com.ycyw.chat.models.Ticket;
 import com.ycyw.chat.services.ClientDetails;
 import com.ycyw.chat.services.AgentDetails;
@@ -28,9 +28,11 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/tickets")
 public class TicketController {
   private final TicketService ticketService;
+  private final TicketMapper ticketMapper;
 
-  public TicketController(TicketService ticketService) {
+  public TicketController(TicketService ticketService, TicketMapper ticketMapper) {
     this.ticketService = ticketService;
+    this.ticketMapper = ticketMapper;
   }
 
   @PostMapping
@@ -50,47 +52,11 @@ public class TicketController {
     List<TicketDetailResponseDto> tickets;
 
     if (principal instanceof ClientDetails clientDetails) {
-      tickets = ticketService.getClientTicketsWithMessages(clientDetails.getId()).stream()
-          .map(ticket -> {
-            List<MessageDto> messageDtos = ticket.getMessages().stream()
-                .map(m -> new MessageDto(
-                    m.getAgent() == null ? "CLIENT" : "AGENT",
-                    m.getAgent() == null ? ticket.getClient().getUsername() : m.getAgent().getName(),
-                    m.getMessage(),
-                    m.getCreatedAt().toString()))
-                .toList();
-
-            return new TicketDetailResponseDto(
-                ticket.getId().toString(),
-                ticket.getStatus().getValue(),
-                ticket.getIssueType(),
-                ticket.getClient().getUsername(),
-                ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getName() : null,
-                messageDtos,
-                ticket.getCreatedAt().toString());
-          })
-          .toList();
+      List<Ticket> clientTickets = ticketService.getClientTicketsWithMessages(clientDetails.getId());
+      tickets = ticketMapper.toDetailResponseDto(clientTickets);
     } else if (principal instanceof AgentDetails agentDetails) {
-      tickets = ticketService.getAgentTicketsWithMessages(agentDetails.getId()).stream()
-          .map(ticket -> {
-            List<MessageDto> messageDtos = ticket.getMessages().stream()
-                .map(m -> new MessageDto(
-                    m.getAgent() == null ? "CLIENT" : "AGENT",
-                    m.getAgent() == null ? ticket.getClient().getUsername() : m.getAgent().getName(),
-                    m.getMessage(),
-                    m.getCreatedAt().toString()))
-                .toList();
-
-            return new TicketDetailResponseDto(
-                ticket.getId().toString(),
-                ticket.getStatus().getValue(),
-                ticket.getIssueType(),
-                ticket.getClient().getUsername(),
-                ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getName() : null,
-                messageDtos,
-                ticket.getCreatedAt().toString());
-          })
-          .toList();
+      List<Ticket> agentTickets = ticketService.getAgentTicketsWithMessages(agentDetails.getId());
+      tickets = ticketMapper.toDetailResponseDto(agentTickets);
     } else {
       return ResponseEntity.status(403).build();
     }
@@ -101,48 +67,14 @@ public class TicketController {
   @GetMapping("/{ticketId}")
   public ResponseEntity<TicketDetailResponseDto> getTicket(@PathVariable UUID ticketId) {
     Ticket ticket = ticketService.getTicket(ticketId);
-    List<MessageDto> messageDtos = ticket.getMessages().stream()
-        .map(m -> new MessageDto(
-            m.getAgent() == null ? "CLIENT" : "AGENT",
-            m.getAgent() == null ? ticket.getClient().getUsername() : m.getAgent().getName(),
-            m.getMessage(),
-            m.getCreatedAt().toString()))
-        .toList();
-
-    TicketDetailResponseDto response = new TicketDetailResponseDto(
-        ticket.getId().toString(),
-        ticket.getStatus().getValue(),
-        ticket.getIssueType(),
-        ticket.getClient().getUsername(),
-        ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getName() : null,
-        messageDtos,
-        ticket.getCreatedAt().toString());
+    TicketDetailResponseDto response = ticketMapper.toDetailResponseDto(ticket);
     return ResponseEntity.ok(response);
   }
 
   @GetMapping("/available")
   public ResponseEntity<List<TicketDetailResponseDto>> getAvailableTickets() {
-    List<TicketDetailResponseDto> tickets = ticketService.getUnassignedTicketsWithMessages().stream()
-        .map(ticket -> {
-          List<MessageDto> messageDtos = ticket.getMessages().stream()
-              .map(m -> new MessageDto(
-                  m.getAgent() == null ? "CLIENT" : "AGENT",
-                  m.getAgent() == null ? ticket.getClient().getUsername() : m.getAgent().getName(),
-                  m.getMessage(),
-                  m.getCreatedAt().toString()))
-              .toList();
-
-          return new TicketDetailResponseDto(
-              ticket.getId().toString(),
-              ticket.getStatus().getValue(),
-              ticket.getIssueType(),
-              ticket.getClient().getUsername(),
-              ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getName() : null,
-              messageDtos,
-              ticket.getCreatedAt().toString());
-        })
-        .toList();
-
+    List<Ticket> unassignedTickets = ticketService.getUnassignedTicketsWithMessages();
+    List<TicketDetailResponseDto> tickets = ticketMapper.toDetailResponseDto(unassignedTickets);
     return ResponseEntity.ok(tickets);
   }
 
@@ -186,22 +118,7 @@ public class TicketController {
         return ResponseEntity.badRequest().build();
     }
 
-    List<MessageDto> messageDtos = ticket.getMessages().stream()
-        .map(m -> new MessageDto(
-            m.getAgent() == null ? "CLIENT" : "AGENT",
-            m.getAgent() == null ? ticket.getClient().getUsername() : m.getAgent().getName(),
-            m.getMessage(),
-            m.getCreatedAt().toString()))
-        .toList();
-
-    TicketDetailResponseDto response = new TicketDetailResponseDto(
-        ticket.getId().toString(),
-        ticket.getStatus().getValue(),
-        ticket.getIssueType(),
-        ticket.getClient().getUsername(),
-        ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getName() : null,
-        messageDtos,
-        ticket.getCreatedAt().toString());
+    TicketDetailResponseDto response = ticketMapper.toDetailResponseDto(ticket);
     return ResponseEntity.ok(response);
   }
 

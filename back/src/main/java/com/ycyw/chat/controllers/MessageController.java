@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 
 import com.ycyw.chat.dto.MessageDto;
 import com.ycyw.chat.dto.request.CreateMessageRequestDto;
+import com.ycyw.chat.mappers.MessageMapper;
 import com.ycyw.chat.models.Message;
 import com.ycyw.chat.models.Ticket;
 import com.ycyw.chat.services.MessageService;
@@ -20,26 +21,23 @@ public class MessageController {
   private final NotifierService notifierService;
   private final MessageService messageService;
   private final TicketService ticketService;
+  private final MessageMapper messageMapper;
 
   public MessageController(NotifierService notifierService,
       MessageService messageService,
-      TicketService ticketService) {
+      TicketService ticketService,
+      MessageMapper messageMapper) {
     this.notifierService = notifierService;
     this.messageService = messageService;
     this.ticketService = ticketService;
+    this.messageMapper = messageMapper;
   }
 
   @MessageMapping("/tickets/{ticketId}/messages")
   public void handleMessage(@DestinationVariable UUID ticketId, CreateMessageRequestDto inDto,
       Principal principal) {
     Message saved = messageService.addMessage(ticketId, inDto, principal);
-
-    MessageDto outDto = new MessageDto(
-        inDto.getSenderType(),
-        saved.getAgent() == null ? saved.getTicket().getClient().getUsername() : saved.getAgent().getName(),
-        inDto.getContent(),
-        saved.getCreatedAt().toString());
-
+    MessageDto outDto = messageMapper.toDto(saved);
     notifierService.notifyTicketMessage(ticketId, outDto);
 
     if ("CLIENT".equals(inDto.getSenderType()) && messageService.isFirstClientMessage(ticketId)) {
