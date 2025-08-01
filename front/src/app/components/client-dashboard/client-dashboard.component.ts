@@ -40,7 +40,7 @@ export class ClientDashboardComponent implements OnInit {
   ticketForm: FormGroup;
   isLoading = false;
   historicalTickets: Ticket[] = [];
-  
+
   issueTypes = [
     { value: 'payment', label: 'Payment Issues', icon: 'payment' },
     { value: 'technical', label: 'Technical Support', icon: 'build' },
@@ -118,10 +118,10 @@ export class ClientDashboardComponent implements OnInit {
 
   getStatusColor(status: string): string {
     switch (status.toLowerCase()) {
-      case 'open': return 'primary';
-      case 'in_progress': return 'accent';
-      case 'resolved': return 'warn';
-      case 'closed': return 'warn';
+      case 'open': return 'badge-open';
+      case 'in_progress': return 'badge-in-progress';
+      case 'resolved': return 'badge-resolved';
+      case 'closed': return 'badge-resolved';
       default: return 'primary';
     }
   }

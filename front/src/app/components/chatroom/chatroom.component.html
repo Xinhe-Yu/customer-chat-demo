@@ -5,12 +5,9 @@
     </button>
     <span>Support Chat</span>
     <span class="spacer"></span>
-    <button 
-      mat-button 
-      color="accent" 
-      (click)="resolveTicket()"
+    <button mat-button color="accent" (click)="resolveTicket()"
       *ngIf="currentUser?.role === 'CLIENT' && canResolveTicket()">
-      <mat-icon>check_circle</mat-icon>
+      <mat-icon>check_circle_outline</mat-icon>
       Mark as Resolved
     </button>
     <mat-chip [color]="isConnected ? 'primary' : 'warn'">
