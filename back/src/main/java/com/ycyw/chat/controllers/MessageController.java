@@ -16,12 +16,12 @@ import com.ycyw.chat.services.NotifierService;
 import com.ycyw.chat.services.TicketService;
 
 @Controller
-public class SupportMessageController {
+public class MessageController {
   private final NotifierService notifierService;
   private final MessageService messageService;
   private final TicketService ticketService;
 
-  public SupportMessageController(NotifierService notifierService,
+  public MessageController(NotifierService notifierService,
       MessageService messageService,
       TicketService ticketService) {
     this.notifierService = notifierService;

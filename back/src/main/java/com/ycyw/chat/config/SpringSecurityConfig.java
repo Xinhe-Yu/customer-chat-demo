@@ -41,6 +41,10 @@ public class SpringSecurityConfig {
     if (this.jwtKey == null || this.jwtKey.trim().isEmpty()) {
       throw new IllegalStateException("JWT_KEY environment variable is not set or is empty");
     }
+
+    if (this.jwtKey.length() < 32) {
+      throw new IllegalStateException("JWT_KEY environment variable must be at least 32 characters long");
+    }
   }
 
   @Bean
