@@ -46,6 +46,7 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
   private shouldScrollToBottom = false;
   private welcomeMessageAdded = false;
   private ticketStatus: string = 'open';
+  private welcomeMessageTimeouts: number[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -88,7 +89,14 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   ngOnDestroy(): void {
+    // Clear all subscriptions
     this.subscriptions.forEach(sub => sub.unsubscribe());
+    
+    // Clear any pending timeouts to prevent memory leaks
+    this.welcomeMessageTimeouts.forEach(timeout => clearTimeout(timeout));
+    this.welcomeMessageTimeouts = [];
+    
+    // Disconnect WebSocket
     this.websocketService.disconnect();
   }
 
@@ -246,14 +254,15 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
     const welcomeMessages = this.getWelcomeMessages();
 
     welcomeMessages.forEach((messageContent, index) => {
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         this.messages.push({
           senderType: 'SYSTEM',
           content: messageContent,
           createdAt: new Date().toISOString()
         });
         this.shouldScrollToBottom = true;
-      }, index * 1000); // Stagger messages by 1 second
+      }, index * 1000) as unknown as number; // Stagger messages by 1 second
+      this.welcomeMessageTimeouts.push(timeoutId);
     });
 
     this.welcomeMessageAdded = true;

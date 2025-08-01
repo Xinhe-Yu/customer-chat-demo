@@ -39,11 +39,14 @@ export class WebsocketService {
           resolve();
         },
         onDisconnect: () => {
+          console.log('WebSocket disconnected');
           this.connectionStatus.next(false);
         },
         onStompError: (frame) => {
           console.error('STOMP error:', frame);
           this.connectionStatus.next(false);
+          // Clear the client on error to prevent hanging connections
+          this.stompClient = undefined;
           reject(frame);
         }
       });
@@ -54,8 +57,16 @@ export class WebsocketService {
 
   disconnect(): void {
     if (this.stompClient) {
-      this.stompClient.deactivate();
-      this.connectionStatus.next(false);
+      try {
+        // Force immediate disconnection
+        this.stompClient.forceDisconnect();
+        this.stompClient.deactivate();
+      } catch (error) {
+        console.warn('Error during WebSocket disconnection:', error);
+      } finally {
+        this.connectionStatus.next(false);
+        this.stompClient = undefined;
+      }
     }
   }
 

@@ -175,6 +175,14 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
+    // Clean up WebSocket connections before logout
+    this.websocketService.disconnect();
+    
+    // Unsubscribe from all subscriptions to prevent memory leaks
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions = [];
+    
+    // Clear auth and navigate
     this.authService.logout();
     this.router.navigate(['/login']);
   }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -16,6 +16,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { TicketService, Ticket } from '../../services/ticket.service';
 import { AuthService } from '../../services/auth.service';
 import { TicketStatusService } from '../../services/ticket-status.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-client-dashboard',
@@ -37,10 +38,11 @@ import { TicketStatusService } from '../../services/ticket-status.service';
   templateUrl: './client-dashboard.component.html',
   styleUrl: './client-dashboard.component.scss'
 })
-export class ClientDashboardComponent implements OnInit {
+export class ClientDashboardComponent implements OnInit, OnDestroy {
   ticketForm: FormGroup;
   isLoading = false;
   historicalTickets: Ticket[] = [];
+  private subscriptions: Subscription[] = [];
 
   issueTypes = [
     { value: 'payment', label: 'Payment Issues', icon: 'payment' },
@@ -67,8 +69,12 @@ export class ClientDashboardComponent implements OnInit {
     this.loadHistoricalTickets();
   }
 
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
   loadHistoricalTickets(): void {
-    this.ticketService.getMyTickets().subscribe({
+    const sub = this.ticketService.getMyTickets().subscribe({
       next: (tickets) => {
         this.historicalTickets = tickets;
       },
@@ -76,6 +82,7 @@ export class ClientDashboardComponent implements OnInit {
         console.error('Error loading historical tickets:', error);
       }
     });
+    this.subscriptions.push(sub);
   }
 
   createTicket(): void {
@@ -84,7 +91,7 @@ export class ClientDashboardComponent implements OnInit {
     this.isLoading = true;
     const { issueType } = this.ticketForm.value;
 
-    this.ticketService.createTicket({ issueType }).subscribe({
+    const sub = this.ticketService.createTicket({ issueType }).subscribe({
       next: (response) => {
         this.isLoading = false;
         this.snackBar.open('Ticket created successfully! Redirecting to chat...', 'Close', {
@@ -102,9 +109,15 @@ export class ClientDashboardComponent implements OnInit {
         console.error('Create ticket error:', error);
       }
     });
+    this.subscriptions.push(sub);
   }
 
   logout(): void {
+    // Clean up subscriptions before logout
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions = [];
+
+    // Clear auth and navigate
     this.authService.logout();
     this.router.navigate(['/login']);
   }
@@ -135,7 +148,7 @@ export class ClientDashboardComponent implements OnInit {
   }
 
   resolveTicket(ticketId: string): void {
-    this.ticketService.resolveTicket(ticketId).subscribe({
+    const sub = this.ticketService.resolveTicket(ticketId).subscribe({
       next: (resolvedTicket) => {
         console.log('Ticket resolved:', resolvedTicket);
         // Update the ticket in the local array
@@ -157,5 +170,6 @@ export class ClientDashboardComponent implements OnInit {
         });
       }
     });
+    this.subscriptions.push(sub);
   }
 }
