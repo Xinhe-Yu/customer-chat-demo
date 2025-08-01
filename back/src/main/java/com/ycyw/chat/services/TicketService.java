@@ -147,13 +147,9 @@ public class TicketService {
         .orElseThrow(() -> new RuntimeException("Ticket not found"));
 
     // Verify permissions
+    // Agents can close any ticket, not just ones assigned to them
     if (clientId != null && !ticket.getClient().getId().equals(clientId)) {
       throw new RuntimeException("Ticket does not belong to this client");
-    }
-
-    if (agentId != null && (ticket.getAssignedAgent() == null ||
-        !ticket.getAssignedAgent().getId().equals(agentId))) {
-      throw new RuntimeException("Ticket is not assigned to this agent");
     }
 
     // Update ticket status to closed

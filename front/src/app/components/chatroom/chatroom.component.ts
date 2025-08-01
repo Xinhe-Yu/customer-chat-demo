@@ -331,4 +331,39 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
     });
   }
+
+  closeTicket(): void {
+    if (this.ticketStatus === 'closed') return;
+
+    this.ticketService.closeTicket(this.ticketId).subscribe({
+      next: (closedTicket) => {
+        console.log('Ticket closed:', closedTicket);
+        this.ticketStatus = closedTicket.status;
+
+        // Add a system message to indicate the ticket was closed
+        this.messages.push({
+          senderType: 'SYSTEM',
+          content: 'This ticket has been closed.',
+          createdAt: new Date().toISOString()
+        });
+        this.shouldScrollToBottom = true;
+
+        // Show success message
+        this.snackBar.open('Ticket closed successfully!', 'Close', {
+          duration: 3000,
+          panelClass: ['success-snackbar']
+        });
+
+        // Navigate back to dashboard
+        this.goBack();
+      },
+      error: (error) => {
+        console.error('Error closing ticket:', error);
+        this.snackBar.open('Failed to close ticket. Please try again.', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
+      }
+    });
+  }
 }
