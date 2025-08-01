@@ -29,7 +29,7 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
   @Query("SELECT t FROM Ticket t WHERE t.id = :ticketId AND t.assignedAgent IS NULL")
   Optional<Ticket> findUnassignedTicketById(@Param("ticketId") UUID ticketId);
 
-  @Query("SELECT DISTINCT t FROM Ticket t LEFT JOIN FETCH t.messages WHERE t.assignedAgent IS NULL ORDER BY t.createdAt DESC")
+  @Query("SELECT DISTINCT t FROM Ticket t JOIN FETCH t.messages WHERE t.assignedAgent IS NULL ORDER BY t.createdAt DESC")
   List<Ticket> findUnassignedTicketsWithMessages();
 
 }
