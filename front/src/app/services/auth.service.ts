@@ -51,8 +51,12 @@ export class AuthService {
   }
 
   logout(): void {
+    // Clear token and user state
     localStorage.removeItem('token');
     this.currentUserSubject.next(null);
+    
+    // Clear any other auth-related data
+    sessionStorage.clear();
   }
 
   getToken(): string | null {

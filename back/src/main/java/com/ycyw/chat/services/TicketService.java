@@ -8,7 +8,6 @@ import com.ycyw.chat.models.TicketStatus;
 import com.ycyw.chat.repositories.AgentRepository;
 import com.ycyw.chat.repositories.ClientRepository;
 import com.ycyw.chat.repositories.TicketRepository;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,19 +18,20 @@ public class TicketService {
   private final TicketRepository ticketRepo;
   private final ClientRepository clientRepo;
   private final AgentRepository agentRepo;
-  private final SimpMessagingTemplate messagingTemplate;
+  private final NotifierService notifierService;
 
-  public TicketService(TicketRepository ticketRepo, ClientRepository clientRepo, AgentRepository agentRepo, SimpMessagingTemplate messagingTemplate) {
+  public TicketService(TicketRepository ticketRepo, ClientRepository clientRepo, AgentRepository agentRepo,
+      NotifierService notifierService) {
     this.ticketRepo = ticketRepo;
     this.clientRepo = clientRepo;
     this.agentRepo = agentRepo;
-    this.messagingTemplate = messagingTemplate;
+    this.notifierService = notifierService;
   }
 
   public Ticket createTicket(UUID clientId, String issueType) {
     Client client = clientRepo.findById(clientId)
         .orElseThrow(() -> new RuntimeException("Client not found"));
-    
+
     Ticket ticket = Ticket.builder()
         .client(client)
         .issueType(issueType)
@@ -71,29 +71,38 @@ public class TicketService {
   }
 
   public Ticket assignAgentToTicket(UUID ticketId, UUID agentId) {
-    // Check if ticket exists and is unassigned
-    Ticket ticket = ticketRepo.findUnassignedTicketById(ticketId)
-        .orElseThrow(() -> new RuntimeException("Ticket not found or already assigned"));
-    
+    // Check if ticket exists first
+    Ticket ticket = ticketRepo.findById(ticketId)
+        .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+    // If ticket is already assigned, return it as-is
+    if (ticket.getAssignedAgent() != null) {
+      return ticket;
+    }
+
+    // Only assign if ticket is OPEN (unassigned)
+    if (ticket.getStatus() != TicketStatus.OPEN) {
+      return ticket;
+    }
+
     // Find the agent
     Agent agent = agentRepo.findById(agentId)
         .orElseThrow(() -> new RuntimeException("Agent not found"));
-    
+
     // Assign agent and update status
     ticket.setAssignedAgent(agent);
     ticket.setStatus(TicketStatus.IN_PROGRESS);
-    
+
     Ticket savedTicket = ticketRepo.save(ticket);
-    
+
     // Broadcast status update to all agents
     TicketStatusUpdateDto statusUpdate = new TicketStatusUpdateDto(
-        ticketId, 
-        TicketStatus.IN_PROGRESS.getValue(), 
-        agentId, 
-        agent.getName()
-    );
-    messagingTemplate.convertAndSend("/topic/agent/ticket-status-updates", statusUpdate);
-    
+        ticketId,
+        TicketStatus.IN_PROGRESS.getValue(),
+        agentId,
+        agent.getName());
+    notifierService.notifyTicketStatusUpdate(statusUpdate);
+
     return savedTicket;
   }
 
@@ -101,30 +110,34 @@ public class TicketService {
     // Find the ticket and verify it belongs to the client
     Ticket ticket = ticketRepo.findById(ticketId)
         .orElseThrow(() -> new RuntimeException("Ticket not found"));
-    
+
     if (!ticket.getClient().getId().equals(clientId)) {
       throw new RuntimeException("Ticket does not belong to this client");
     }
-    
+
     // Only allow resolution if ticket is not already resolved or closed
     if (ticket.getStatus() == TicketStatus.RESOLVED || ticket.getStatus() == TicketStatus.CLOSED) {
       throw new RuntimeException("Ticket is already resolved or closed");
     }
-    
+
+    // If ticket is not yet treated by an agent, delete it
+    if (ticket.getMessages().size() == 0 || ticket.getAssignedAgent() == null) {
+      ticketRepo.delete(ticket);
+    }
+
     // Update ticket status to resolved
     ticket.setStatus(TicketStatus.RESOLVED);
-    
+
     Ticket savedTicket = ticketRepo.save(ticket);
-    
+
     // Broadcast status update to all agents
     TicketStatusUpdateDto statusUpdate = new TicketStatusUpdateDto(
-        ticketId, 
-        TicketStatus.RESOLVED.getValue(), 
+        ticketId,
+        TicketStatus.RESOLVED.getValue(),
         ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getId() : null,
-        ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getName() : null
-    );
-    messagingTemplate.convertAndSend("/topic/agent/ticket-status-updates", statusUpdate);
-    
+        ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getName() : null);
+    notifierService.notifyTicketStatusUpdate(statusUpdate);
+
     return savedTicket;
   }
 
@@ -132,31 +145,27 @@ public class TicketService {
     // Find the ticket
     Ticket ticket = ticketRepo.findById(ticketId)
         .orElseThrow(() -> new RuntimeException("Ticket not found"));
-    
+
     // Verify permissions
+    // Agents can close any ticket, not just ones assigned to them
     if (clientId != null && !ticket.getClient().getId().equals(clientId)) {
       throw new RuntimeException("Ticket does not belong to this client");
     }
-    
-    if (agentId != null && (ticket.getAssignedAgent() == null || 
-        !ticket.getAssignedAgent().getId().equals(agentId))) {
-      throw new RuntimeException("Ticket is not assigned to this agent");
-    }
-    
+
     // Update ticket status to closed
     ticket.setStatus(TicketStatus.CLOSED);
-    
+
     Ticket savedTicket = ticketRepo.save(ticket);
-    
+
     // Broadcast status update to all agents
     TicketStatusUpdateDto statusUpdate = new TicketStatusUpdateDto(
-        ticketId, 
-        TicketStatus.CLOSED.getValue(), 
+        ticketId,
+        TicketStatus.CLOSED.getValue(),
         ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getId() : null,
-        ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getName() : null
-    );
-    messagingTemplate.convertAndSend("/topic/agent/ticket-status-updates", statusUpdate);
-    
+        ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getName() : null);
+    notifierService.notifyTicketStatusUpdate(statusUpdate);
+
     return savedTicket;
   }
+
 }

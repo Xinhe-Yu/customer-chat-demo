@@ -31,8 +31,8 @@ public class MessageService {
    * Save a new message into the database.
    */
   public Message addMessage(UUID ticketId, CreateMessageRequestDto messageDto, Principal principal) {
-    // Ensure ticket exists
-    Ticket ticket = ticketRepository.findById(ticketId)
+    // Ensure ticket exists with client loaded
+    Ticket ticket = ticketRepository.findByIdWithClient(ticketId)
         .orElseThrow(() -> new RuntimeException("Ticket not found"));
 
     // Determine if this is a client or agent
@@ -51,7 +51,12 @@ public class MessageService {
         .createdAt(LocalDateTime.now())
         .build();
 
-    return messageRepository.save(message);
+    Message savedMessage = messageRepository.save(message);
+    
+    // Ensure the saved message has the ticket with client loaded
+    savedMessage.setTicket(ticket);
+    
+    return savedMessage;
   }
 
   /**

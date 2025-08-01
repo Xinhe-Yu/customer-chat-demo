@@ -112,13 +112,13 @@ mvn clean install -DskipTests
 4. **Initialize Database:**
 ```bash
 # Create database
-sudo -u postgres psql -c "CREATE DATABASE chat;"
+sudo -u postgres psql -c "CREATE DATABASE ycyw;"
 
 # Apply schema
-sudo -u postgres psql -d chat -f src/main/resources/static/schema.sql
+sudo -u postgres psql -d ycyw -f src/main/resources/static/schema.sql
 
 # Apply seed data
-sudo -u postgres psql -d chat -f src/main/resources/static/seeds.sql
+sudo -u postgres psql -d ycyw -f src/main/resources/static/seeds.sql
 ```
 
 5. **Run Backend:**

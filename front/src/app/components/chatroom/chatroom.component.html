@@ -5,13 +5,15 @@
     </button>
     <span>Support Chat</span>
     <span class="spacer"></span>
-    <button 
-      mat-button 
-      color="accent" 
-      (click)="resolveTicket()"
+    <button mat-button color="accent" (click)="resolveTicket()"
       *ngIf="currentUser?.role === 'CLIENT' && canResolveTicket()">
-      <mat-icon>check_circle</mat-icon>
-      Mark as Resolved
+      <mat-icon>{{ !canDeleteTicket() ? 'check_circle_outline' : 'delete' }}</mat-icon>
+      {{ !canDeleteTicket() ? 'Mark as Resolved' : 'Delete Ticket' }}
+    </button>
+    <button mat-button color="accent" (click)="closeTicket()"
+      *ngIf="currentUser?.role === 'AGENT' && canResolveTicket()">
+      <mat-icon>cancel</mat-icon>
+      Close Ticket
     </button>
     <mat-chip [color]="isConnected ? 'primary' : 'warn'">
       <mat-icon>{{ isConnected ? 'wifi' : 'wifi_off' }}</mat-icon>

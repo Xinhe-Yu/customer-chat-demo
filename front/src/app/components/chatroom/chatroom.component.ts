@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatCardModule } from '@angular/material/card';
@@ -46,6 +46,7 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
   private shouldScrollToBottom = false;
   private welcomeMessageAdded = false;
   private ticketStatus: string = 'open';
+  private welcomeMessageTimeouts: number[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -57,7 +58,7 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
     private snackBar: MatSnackBar
   ) {
     this.messageForm = this.fb.group({
-      message: ['', [Validators.required, Validators.minLength(1)]]
+      message: ['']
     });
 
     // Initially disable the form until connected
@@ -88,7 +89,14 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   ngOnDestroy(): void {
+    // Clear all subscriptions
     this.subscriptions.forEach(sub => sub.unsubscribe());
+    
+    // Clear any pending timeouts to prevent memory leaks
+    this.welcomeMessageTimeouts.forEach(timeout => clearTimeout(timeout));
+    this.welcomeMessageTimeouts = [];
+    
+    // Disconnect WebSocket
     this.websocketService.disconnect();
   }
 
@@ -193,6 +201,7 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (this.messageForm.invalid || !this.isConnected || !this.currentUser) return;
 
     const messageText = this.messageForm.get('message')?.value.trim();
+
     if (!messageText) return;
 
     const message: ChatMessage = {
@@ -202,7 +211,7 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     try {
       this.websocketService.sendMessage(this.ticketId, message);
-      this.messageForm.reset();
+      this.messageForm.get('message')?.setValue('');
     } catch (error) {
       console.error('Failed to send message:', error);
     }
@@ -242,19 +251,18 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
     // Only show welcome messages for clients
     if (this.currentUser.role !== 'CLIENT') return;
 
-    console.log('Adding welcome message for client'); // Debug log
-
     const welcomeMessages = this.getWelcomeMessages();
 
     welcomeMessages.forEach((messageContent, index) => {
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         this.messages.push({
           senderType: 'SYSTEM',
           content: messageContent,
           createdAt: new Date().toISOString()
         });
         this.shouldScrollToBottom = true;
-      }, index * 1000); // Stagger messages by 1 second
+      }, index * 1000) as unknown as number; // Stagger messages by 1 second
+      this.welcomeMessageTimeouts.push(timeoutId);
     });
 
     this.welcomeMessageAdded = true;
@@ -297,6 +305,10 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
     return this.ticketStatus !== 'resolved' && this.ticketStatus !== 'closed';
   }
 
+  canDeleteTicket(): boolean {
+    return this.messages.filter(msg => msg.senderType === 'AGENT').length === 0;
+  }
+
   resolveTicket(): void {
     if (!this.canResolveTicket()) return;
 
@@ -304,7 +316,7 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
       next: (resolvedTicket) => {
         console.log('Ticket resolved:', resolvedTicket);
         this.ticketStatus = resolvedTicket.status;
-        
+
         // Add a system message to indicate the ticket was resolved
         this.messages.push({
           senderType: 'SYSTEM',
@@ -312,7 +324,7 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
           createdAt: new Date().toISOString()
         });
         this.shouldScrollToBottom = true;
-        
+
         // Show success message
         this.snackBar.open('Ticket marked as resolved!', 'Close', {
           duration: 3000,
@@ -322,6 +334,41 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
       error: (error) => {
         console.error('Error resolving ticket:', error);
         this.snackBar.open('Failed to resolve ticket. Please try again.', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
+      }
+    });
+  }
+
+  closeTicket(): void {
+    if (this.ticketStatus === 'closed') return;
+
+    this.ticketService.closeTicket(this.ticketId).subscribe({
+      next: (closedTicket) => {
+        console.log('Ticket closed:', closedTicket);
+        this.ticketStatus = closedTicket.status;
+
+        // Add a system message to indicate the ticket was closed
+        this.messages.push({
+          senderType: 'SYSTEM',
+          content: 'This ticket has been closed.',
+          createdAt: new Date().toISOString()
+        });
+        this.shouldScrollToBottom = true;
+
+        // Show success message
+        this.snackBar.open('Ticket closed successfully!', 'Close', {
+          duration: 3000,
+          panelClass: ['success-snackbar']
+        });
+
+        // Navigate back to dashboard
+        this.goBack();
+      },
+      error: (error) => {
+        console.error('Error closing ticket:', error);
+        this.snackBar.open('Failed to close ticket. Please try again.', 'Close', {
           duration: 3000,
           panelClass: ['error-snackbar']
         });

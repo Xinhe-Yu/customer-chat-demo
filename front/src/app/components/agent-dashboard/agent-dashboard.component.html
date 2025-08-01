@@ -13,7 +13,7 @@
     <div class="section">
       <div class="header">
         <h2>My Assigned Tickets</h2>
-        <mat-chip [matBadge]="assignedTickets.length" matBadgeColor="accent">
+        <mat-chip class="badge-chip" [matBadge]="assignedTickets.length" matBadgeColor="accent">
           Assigned to Me
         </mat-chip>
       </div>
@@ -27,7 +27,7 @@
             <mat-card-title>{{ ticket.issueType | titlecase }}</mat-card-title>
             <mat-card-subtitle>{{ ticket.clientName }}</mat-card-subtitle>
           </mat-card-header>
-          
+
           <mat-card-content>
             <div class="ticket-info">
               <div class="info-row">
@@ -40,13 +40,15 @@
               </div>
               <div class="info-row">
                 <span class="label">Status:</span>
-                <mat-chip [color]="getStatusColor(ticket.status)">
-                  {{ ticket.status | titlecase }}
-                </mat-chip>
+                <div class="ticket-status">
+                  <span [ngClass]="['badge', getStatusColor(ticket.status)]">
+                    {{ ticket.status | titlecase }}
+                  </span>
+                </div>
               </div>
             </div>
           </mat-card-content>
-          
+
           <mat-card-actions>
             <button mat-raised-button color="accent" (click)="joinTicket(ticket.ticketId)">
               <mat-icon>chat</mat-icon>
@@ -64,7 +66,7 @@
     </div>
 
     <!-- Available Tickets Section -->
-    <div class="section">
+    <div class="section mt-4">
       <div class="header">
         <h2>Available Support Tickets</h2>
         <mat-chip [matBadge]="tickets.length" matBadgeColor="warn">
@@ -81,7 +83,7 @@
             <mat-card-title>{{ ticket.issueType | titlecase }}</mat-card-title>
             <mat-card-subtitle>{{ ticket.clientName }}</mat-card-subtitle>
           </mat-card-header>
-          
+
           <mat-card-content>
             <div class="ticket-info">
               <div class="info-row">
@@ -94,13 +96,15 @@
               </div>
               <div class="info-row">
                 <span class="label">Status:</span>
-                <mat-chip [color]="getStatusColor(ticket.status)">
-                  {{ ticket.status | titlecase }}
-                </mat-chip>
+                <div class="ticket-status">
+                  <span [ngClass]="['badge', getStatusColor(ticket.status)]">
+                    {{ ticket.status | titlecase }}
+                  </span>
+                </div>
               </div>
             </div>
           </mat-card-content>
-          
+
           <mat-card-actions>
             <button mat-raised-button color="primary" (click)="joinTicket(ticket.ticketId)">
               <mat-icon>chat</mat-icon>
