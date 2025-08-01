@@ -7,8 +7,8 @@
     <span class="spacer"></span>
     <button mat-button color="accent" (click)="resolveTicket()"
       *ngIf="currentUser?.role === 'CLIENT' && canResolveTicket()">
-      <mat-icon>check_circle_outline</mat-icon>
-      Mark as Resolved
+      <mat-icon>{{ !canDeleteTicket() ? 'check_circle_outline' : 'delete' }}</mat-icon>
+      {{ !canDeleteTicket() ? 'Mark as Resolved' : 'Delete Ticket' }}
     </button>
     <mat-chip [color]="isConnected ? 'primary' : 'warn'">
       <mat-icon>{{ isConnected ? 'wifi' : 'wifi_off' }}</mat-icon>

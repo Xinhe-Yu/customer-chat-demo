@@ -27,7 +27,7 @@
             <mat-card-title>{{ ticket.issueType | titlecase }}</mat-card-title>
             <mat-card-subtitle>{{ ticket.clientName }}</mat-card-subtitle>
           </mat-card-header>
-          
+
           <mat-card-content>
             <div class="ticket-info">
               <div class="info-row">
@@ -46,7 +46,7 @@
               </div>
             </div>
           </mat-card-content>
-          
+
           <mat-card-actions>
             <button mat-raised-button color="accent" (click)="joinTicket(ticket.ticketId)">
               <mat-icon>chat</mat-icon>
@@ -81,7 +81,7 @@
             <mat-card-title>{{ ticket.issueType | titlecase }}</mat-card-title>
             <mat-card-subtitle>{{ ticket.clientName }}</mat-card-subtitle>
           </mat-card-header>
-          
+
           <mat-card-content>
             <div class="ticket-info">
               <div class="info-row">
@@ -94,13 +94,15 @@
               </div>
               <div class="info-row">
                 <span class="label">Status:</span>
-                <mat-chip [color]="getStatusColor(ticket.status)">
-                  {{ ticket.status | titlecase }}
-                </mat-chip>
+                <div class="ticket-status">
+                  <span [ngClass]="['badge', getStatusColor(ticket.status)]">
+                    {{ ticket.status | titlecase }}
+                  </span>
+                </div>
               </div>
             </div>
           </mat-card-content>
-          
+
           <mat-card-actions>
             <button mat-raised-button color="primary" (click)="joinTicket(ticket.ticketId)">
               <mat-icon>chat</mat-icon>

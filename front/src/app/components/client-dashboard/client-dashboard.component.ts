@@ -15,6 +15,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatBadgeModule } from '@angular/material/badge';
 import { TicketService, Ticket } from '../../services/ticket.service';
 import { AuthService } from '../../services/auth.service';
+import { TicketStatusService } from '../../services/ticket-status.service';
 
 @Component({
   selector: 'app-client-dashboard',
@@ -53,6 +54,7 @@ export class ClientDashboardComponent implements OnInit {
     private fb: FormBuilder,
     private ticketService: TicketService,
     private authService: AuthService,
+    private ticketStatusService: TicketStatusService,
     private router: Router,
     private snackBar: MatSnackBar
   ) {
@@ -117,23 +119,11 @@ export class ClientDashboardComponent implements OnInit {
   }
 
   getStatusColor(status: string): string {
-    switch (status.toLowerCase()) {
-      case 'open': return 'badge-open';
-      case 'in_progress': return 'badge-in-progress';
-      case 'resolved': return 'badge-resolved';
-      case 'closed': return 'badge-resolved';
-      default: return 'primary';
-    }
+    return this.ticketStatusService.getCssClass(status);
   }
 
   formatStatus(status: string): string {
-    switch (status.toLowerCase()) {
-      case 'open': return 'Open';
-      case 'in_progress': return 'In Progress';
-      case 'resolved': return 'Resolved';
-      case 'closed': return 'Closed';
-      default: return status;
-    }
+    return this.ticketStatusService.formatStatus(status);
   }
 
   formatDate(dateString: string): string {

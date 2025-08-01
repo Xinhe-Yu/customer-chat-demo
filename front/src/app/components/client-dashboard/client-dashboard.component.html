@@ -141,7 +141,7 @@
                   [disabled]="ticket.status === 'resolved' || ticket.status === 'closed'"
                   *ngIf="ticket.status !== 'resolved' && ticket.status !== 'closed'">
                   <mat-icon>{{ ticket.messages.length > 0 ? 'check_circle_outline' : 'delete' }}</mat-icon>
-                  {{ ticket.messages.length > 0 ? 'Mark as Resolved' : 'Delete Ticket' }}
+                  {{ ticket.messages.length > 0 || ticket.agentName ? 'Mark as Resolved' : 'Delete Ticket' }}
                 </button>
               </mat-card-actions>
             </mat-card>

@@ -10,6 +10,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { WebsocketService } from '../../services/websocket.service';
 import { AuthService } from '../../services/auth.service';
 import { TicketService, Ticket } from '../../services/ticket.service';
+import { TicketStatusService } from '../../services/ticket-status.service';
 import { Subscription } from 'rxjs';
 
 interface TicketInfo {
@@ -44,6 +45,7 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
     private websocketService: WebsocketService,
     private authService: AuthService,
     private ticketService: TicketService,
+    private ticketStatusService: TicketStatusService,
     private router: Router
   ) { }
 
@@ -53,7 +55,7 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
       this.currentUserId = user?.id || null;
     });
     this.subscriptions.push(userSub);
-    
+
     this.loadTickets();
     this.loadAssignedTickets();
     this.connectWebSocket();
@@ -113,16 +115,16 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
         next: (statusUpdate) => {
           console.log('Ticket status update received:', statusUpdate);
           console.log('Current user ID:', this.currentUserId);
-          
+
           // Convert ticket ID to string for comparison
           const ticketIdStr = statusUpdate.ticketId.toString();
-          
+
           // Get current user info to check if this agent is the one being assigned
-          const isCurrentAgent = this.currentUserId && statusUpdate.agentId && 
-                                this.currentUserId === statusUpdate.agentId.toString();
-          
+          const isCurrentAgent = this.currentUserId && statusUpdate.agentId &&
+            this.currentUserId === statusUpdate.agentId.toString();
+
           console.log('Is current agent:', isCurrentAgent, 'Agent ID from update:', statusUpdate.agentId);
-          
+
           // Update the ticket status or remove it if assigned to another agent
           const ticketIndex = this.tickets.findIndex(t => t.ticketId === ticketIdStr);
           if (ticketIndex !== -1) {
@@ -131,7 +133,7 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
               // Remove ticket from available list as it's now assigned
               this.tickets.splice(ticketIndex, 1);
               console.log('Removed ticket from available list:', ticketIdStr);
-              
+
               // If this agent is the one who got assigned, add it to assigned tickets
               if (isCurrentAgent) {
                 ticket.status = statusUpdate.status;
@@ -178,13 +180,7 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
   }
 
   getStatusColor(status: string): string {
-    switch (status.toLowerCase()) {
-      case 'open': return 'primary';
-      case 'in_progress': return 'accent';
-      case 'resolved': return 'warn';
-      case 'closed': return 'warn';
-      default: return 'primary';
-    }
+    return this.ticketStatusService.getCssClass(status);
   }
 
   formatDate(dateString: string): string {

@@ -193,6 +193,7 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (this.messageForm.invalid || !this.isConnected || !this.currentUser) return;
 
     const messageText = this.messageForm.get('message')?.value.trim();
+
     if (!messageText) return;
 
     const message: ChatMessage = {
@@ -202,7 +203,7 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     try {
       this.websocketService.sendMessage(this.ticketId, message);
-      this.messageForm.reset();
+      this.messageForm.get('message')?.setValue('');
     } catch (error) {
       console.error('Failed to send message:', error);
     }
@@ -241,8 +242,6 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     // Only show welcome messages for clients
     if (this.currentUser.role !== 'CLIENT') return;
-
-    console.log('Adding welcome message for client'); // Debug log
 
     const welcomeMessages = this.getWelcomeMessages();
 
@@ -295,6 +294,10 @@ export class ChatroomComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   canResolveTicket(): boolean {
     return this.ticketStatus !== 'resolved' && this.ticketStatus !== 'closed';
+  }
+
+  canDeleteTicket(): boolean {
+    return this.messages.filter(msg => msg.senderType === 'AGENT').length === 0;
   }
 
   resolveTicket(): void {
